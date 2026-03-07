@@ -8,3 +8,15 @@ export interface Transaction {
   type: TransactionType;
   category: string;
 }
+
+export interface UserProfile {
+  name: string;
+  avatarUrl: string;
+}
+
+export interface FinancialStatus {
+  label: string;
+  color: string;
+  bgColor: string;
+  icon: string;
+}
