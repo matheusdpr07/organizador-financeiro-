@@ -41,7 +41,6 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Efeito para aplicar o tema no <html>
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -109,65 +108,69 @@ function App() {
 
   return (
     <div className={`relative min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans selection:bg-brand-100 antialiased overflow-x-hidden`}>
-      {/* OVERLAY DE ABERTURA (SPLASH SCREEN) */}
+      {/* SPLASH SCREEN */}
       {showSplash && (
         <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex flex-col items-center text-center w-full max-w-2xl px-8">
-            <div className="relative mb-12 animate-scale-in">
-              <div className={`w-64 h-64 overflow-hidden rounded-[48px] shadow-2xl border ${isDarkMode ? 'border-slate-800 bg-[#161a20]' : 'border-slate-50 bg-white'}`}>
+          <div className="flex flex-col items-center text-center w-full max-w-2xl px-6">
+            <div className="relative mb-8 md:mb-12 animate-scale-in">
+              <div className={`w-48 h-48 md:w-64 md:h-64 overflow-hidden rounded-[40px] md:rounded-[48px] shadow-2xl border ${isDarkMode ? 'border-slate-800 bg-[#161a20]' : 'border-slate-50 bg-white'}`}>
                 <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-            <div className="space-y-6 flex flex-col items-center">
-              <h2 className={`text-7xl font-black uppercase tracking-[0.5em] leading-none ml-[0.5em] animate-fade-in [animation-delay:400ms] [animation-fill-mode:both] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-              <div className="h-1 w-48 bg-brand-500 rounded-full animate-fade-in [animation-delay:600ms] [animation-fill-mode:both]"></div>
+            <div className="space-y-4 animate-fade-in [animation-delay:0.6s] flex flex-col items-center">
+              <h2 className={`text-5xl md:text-7xl font-black uppercase tracking-[0.3em] md:tracking-[0.5em] leading-none ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+              <div className="h-1 w-32 md:w-48 bg-brand-500 rounded-full"></div>
             </div>
-
-            <div className="mt-24 flex gap-3">
-              <div className="w-3 h-3 bg-brand-500 rounded-full animate-bounce"></div>
-              <div className="w-3 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="w-3 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+            <div className="mt-16 md:mt-24 flex gap-3">
+              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce"></div>
+              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
             </div>
           </div>
         </div>
       )}
 
-      {/* CONTEÚDO PRINCIPAL */}
+      {/* CONTEÚDO PRINCIPAL COM LAYOUT EXECUTIVO RESTAURADO */}
       <div className={`transition-all duration-1000 delay-300 ${isFadingOut ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <header className={`border-b transition-colors duration-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-6 pb-6 px-6`}>
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-4 group cursor-pointer">
-                <div className={`w-16 h-16 overflow-hidden rounded-2xl border shadow-sm transition-colors ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
+        <header className={`border-b transition-colors duration-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-4 pb-4 px-4 md:px-6`}>
+          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 w-full lg:w-auto">
+              {/* LOGO E NOME */}
+              <div className="flex items-center gap-4 group cursor-pointer self-start md:self-auto">
+                <div className={`w-14 h-14 md:w-16 md:h-16 overflow-hidden rounded-2xl border shadow-sm transition-colors ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
                   <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                 </div>
                 <div>
-                  <h2 className={`text-xl font-black leading-none tracking-tight uppercase ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sua Gestão</p>
+                  <h2 className={`text-lg md:text-xl font-black leading-none tracking-tight uppercase ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Plataforma Oficial</p>
                 </div>
               </div>
-              <div className={`hidden md:block h-12 w-px ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}></div>
-              <div className="flex items-center bg-brand-600 rounded-lg p-1 shadow-md">
+
+              <div className="hidden md:block h-12 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+              {/* SELETOR DE MESES */}
+              <div className="flex items-center bg-brand-600 rounded-lg p-1 shadow-md w-full md:w-auto justify-between md:justify-start">
                 <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-white/10 rounded-md transition-all text-white"><ChevronLeft className="w-4 h-4" /></button>
-                <span className="mx-4 font-bold text-sm capitalize min-w-[120px] text-center text-white tracking-wide">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
+                <span className="mx-4 font-bold text-xs md:text-sm capitalize min-w-[120px] text-center text-white tracking-wide">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
                 <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-white/10 rounded-md transition-all text-white"><ChevronRight className="w-4 h-4" /></button>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
-              <div className={`flex items-center gap-3 pr-6 border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                {/* BOTÃO MUDAR TEMA */}
-                <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+            <div className="flex items-center justify-between lg:justify-end gap-4 md:gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 dark:border-slate-800">
+              <div className={`flex items-center gap-3 pr-4 md:pr-6 border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2.5 rounded-lg transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-50 text-slate-500'}`}>
                   {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
-                <button onClick={() => setShowBalance(!showBalance)} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-50'}`}>{showBalance ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}</button>
-                <button className={`p-2 rounded-lg transition-all ${isDarkMode ? 'text-slate-400 hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-50'}`}><Settings className="w-5 h-5" /></button>
+                <button onClick={() => setShowBalance(!showBalance)} className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">{showBalance ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}</button>
+                <button className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><Settings className="w-5 h-5" /></button>
               </div>
-              <div className="flex items-center gap-4 pl-6 text-right">
+              
+              {/* PERFIL À DIREITA */}
+              <div className="flex items-center gap-4 text-right">
                 <div className="hidden sm:block">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Bem-vindo,</p>
                   <p className={`text-sm font-bold leading-none mb-2 ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{user.name}</p>
-                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-1.5 ml-auto text-[10px] font-bold text-brand-600 dark:text-brand-400 hover:opacity-80 uppercase tracking-widest transition-all"><Pencil className="w-3 h-3" /> Ajustar Perfil</button>
+                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-1.5 ml-auto text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest transition-all"><Pencil className="w-3 h-3" /> Ajustar</button>
                 </div>
                 <div className={`w-12 h-12 rounded-xl border-2 overflow-hidden flex items-center justify-center cursor-pointer transition-all shadow-sm relative group ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-400' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`} onClick={() => setIsEditingProfile(true)}>
                   {user.avatarUrl ? <img src={user.avatarUrl} alt="User" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-slate-400">{getInitials(user.name)}</span>}
@@ -178,14 +181,15 @@ function App() {
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-6 py-10 space-y-8 pb-20">
+        <main className="max-w-6xl mx-auto px-4 md:px-6 py-8 space-y-8 pb-20">
+          {/* CARDS RESUMO */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`p-8 rounded-2xl border transition-all relative overflow-hidden group ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-              <div className="absolute top-0 left-0 w-1 h-full bg-brand-500 shadow-[0_0_15px_rgba(130,10,209,0.5)]"></div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Patrimônio Líquido</p>
+            <div className={`p-8 rounded-2xl border transition-all relative overflow-hidden ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
+              <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Patrimônio Líquido</p>
               <div className="flex items-center justify-between">
-                <h2 className={`text-4xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color} border border-current/10 shadow-sm transition-all`}>{financialStatus.icon} {financialStatus.label}</div>
+                <h2 className={`text-3xl md:text-4xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color} border border-current/10 shadow-sm`}>{financialStatus.icon} {financialStatus.label}</div>
               </div>
             </div>
             <div className={`p-8 rounded-2xl border transition-all flex items-center gap-5 ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
@@ -198,13 +202,14 @@ function App() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
+            {/* FORMULÁRIO */}
             <div className="lg:col-span-4">
-              <div className={`p-10 rounded-2xl border transition-all duration-500 shadow-xl sticky top-10 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} ${editingId ? 'ring-4 ring-brand-500/20 border-brand-500' : ''}`}>
-                <div className="flex items-center gap-3 mb-10"><div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">{editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}</div><h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{editingId ? 'Editar registro' : 'Nova transação'}</h3></div>
-                <form onSubmit={handleSaveTransaction} className="space-y-8">
+              <div className={`p-8 md:p-10 rounded-2xl border transition-all duration-500 shadow-xl sticky top-24 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} ${editingId ? 'ring-4 ring-brand-500/20 border-brand-500' : ''}`}>
+                <div className="flex items-center gap-3 mb-8 md:mb-10"><div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">{editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}</div><h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{editingId ? 'Editar registro' : 'Nova transação'}</h3></div>
+                <form onSubmit={handleSaveTransaction} className="space-y-6 md:space-y-8">
                   <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Descrição</label><input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm font-medium ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} placeholder="Ex: Salário" /></div>
-                  <div className="grid grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
                     <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Valor do Fluxo</label><input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} placeholder="0,00" /></div>
                     <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Data</label><input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm font-medium ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} /></div>
                   </div>
@@ -217,9 +222,10 @@ function App() {
               </div>
             </div>
 
+            {/* LISTA */}
             <div className="lg:col-span-8">
               <div className={`rounded-2xl border transition-all overflow-hidden min-h-[600px] ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <div className={`px-10 py-6 border-b flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm ${isDarkMode ? 'bg-[#161a20]/80 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
+                <div className={`px-6 md:px-10 py-6 border-b flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm ${isDarkMode ? 'bg-[#161a20]/80 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
                   <h3 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>Extrato de Operações</h3>
                   <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-lg border border-brand-100 dark:border-brand-800 uppercase tracking-widest">{filteredTransactions.length} registros</span>
                 </div>
@@ -228,9 +234,18 @@ function App() {
                     <div className="py-64 text-center opacity-20 flex flex-col items-center"><Calendar className="w-20 h-20 mb-6 text-slate-300" /><p className={`font-black text-xs uppercase tracking-[0.5em] ${isDarkMode ? 'text-white' : 'text-slate-400'}`}>Sem atividades</p></div>
                   ) : (
                     filteredTransactions.map((t) => (
-                      <div key={t.id} className={`px-10 py-6 flex items-center justify-between transition-all group border-l-[8px] border-transparent ${editingId === t.id ? 'bg-brand-500/10 border-brand-500' : 'hover:bg-slate-500/5 hover:border-brand-500'}`}>
-                        <div className="flex items-center gap-8"><div className={`w-14 h-14 rounded-xl flex items-center justify-center border shadow-sm transition-transform group-hover:scale-110 ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}><TrendingUp className="w-7 h-7" /></div><div><p className={`font-bold text-lg leading-none mb-2 uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{t.description}</p><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p></div></div>
-                        <div className="flex items-center gap-10"><p className={`font-black text-2xl tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p><div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all"><button onClick={() => startEdit(t)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}><Pencil className="w-5 h-5" /></button><button onClick={() => removeTransaction(t.id)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}><Trash2 className="w-5 h-5" /></button></div></div>
+                      <div key={t.id} className={`px-6 md:px-10 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between transition-all group border-l-[8px] border-transparent ${editingId === t.id ? 'bg-brand-500/10 border-brand-500' : 'hover:bg-slate-500/5 hover:border-brand-500'}`}>
+                        <div className="flex items-center gap-6 mb-4 sm:mb-0">
+                          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center border shadow-sm shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}><TrendingUp className="w-6 h-6 md:w-7 md:h-7" /></div>
+                          <div><p className={`font-bold text-base md:text-lg leading-none mb-2 uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{t.description}</p><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p></div>
+                        </div>
+                        <div className="flex items-center justify-between sm:justify-end gap-6 md:gap-10 w-full sm:w-auto">
+                          <p className={`font-black text-xl md:text-2xl tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                            <button onClick={() => startEdit(t)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}><Pencil className="w-5 h-5" /></button>
+                            <button onClick={() => removeTransaction(t.id)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}><Trash2 className="w-5 h-5" /></button>
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
