@@ -118,10 +118,11 @@ function App() {
                 <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-            <div className="space-y-6 animate-fade-in [animation-delay:0.6s] flex flex-col items-center">
-              <h2 className={`text-7xl font-black uppercase tracking-[0.5em] leading-none ml-[0.5em] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-              <div className="h-1.5 w-48 bg-brand-500 rounded-full"></div>
+            <div className="space-y-6 flex flex-col items-center">
+              <h2 className={`text-7xl font-black uppercase tracking-[0.5em] leading-none ml-[0.5em] animate-fade-in [animation-delay:400ms] [animation-fill-mode:both] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+              <div className="h-1 w-48 bg-brand-500 rounded-full animate-fade-in [animation-delay:600ms] [animation-fill-mode:both]"></div>
             </div>
+
             <div className="mt-24 flex gap-3">
               <div className="w-3 h-3 bg-brand-500 rounded-full animate-bounce"></div>
               <div className="w-3 h-3 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
