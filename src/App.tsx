@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, User, Crown, Trophy, CheckCircle2, AlertCircle, XCircle, Eye, EyeOff, Settings, Bell, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun
+  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Settings, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
