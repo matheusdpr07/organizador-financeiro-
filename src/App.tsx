@@ -125,8 +125,8 @@ function App() {
               </div>
             </div>
             <div className="space-y-4 animate-fade-in [animation-delay:0.6s] flex flex-col items-center">
-              <h2 className={`text-5xl md:text-7xl font-black uppercase tracking-[0.3em] md:tracking-[0.5em] leading-none ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-              <div className="h-1 w-32 md:w-48 bg-brand-500 rounded-full"></div>
+              <h2 className={`text-4xl md:text-7xl font-black uppercase tracking-[0.2em] md:tracking-[0.5em] leading-none ml-[0.2em] md:ml-[0.5em] animate-fade-in [animation-delay:400ms] [animation-fill-mode:both] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+              <div className="h-1 w-32 md:w-48 bg-brand-500 rounded-full animate-fade-in [animation-delay:600ms] [animation-fill-mode:both]"></div>
             </div>
             <div className="mt-16 md:mt-24 flex gap-3">
               <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce"></div>
