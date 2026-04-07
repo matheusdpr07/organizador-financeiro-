@@ -6,7 +6,7 @@ import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Transaction, TransactionType, User } from './types';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.104:3001';
 
 function Login({ onLogin }: { onLogin: (user: User) => void }) {
   const [isRegistering, setIsRegistering] = useState(false);

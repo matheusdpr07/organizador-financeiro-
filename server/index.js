@@ -7,10 +7,13 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+// CONFIGURAÇÃO DINÂMICA (RAILWAY OU LOCAL)
 const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS
+  host: process.env.MYSQLHOST || process.env.DB_HOST,
+  user: process.env.MYSQLUSER || process.env.DB_USER,
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASS,
+  port: process.env.MYSQLPORT || 3306,
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME
 };
 
 const connection = mysql.createConnection(dbConfig);
@@ -23,41 +26,45 @@ connection.connect(err => {
   
   console.log('Conectado ao MySQL! Preparando banco de dados...');
   
-  connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`, (err) => {
-    if (err) throw err;
+  const dbName = process.env.MYSQLDATABASE || process.env.DB_NAME;
+
+  connection.query(`USE ${dbName}`, (err) => {
+    if (err) {
+      console.log('Banco não encontrado, tentando criar...');
+      connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`, (err) => {
+        if (err) throw err;
+        connection.query(`USE ${dbName}`);
+      });
+    }
+      
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        avatar_url LONGTEXT
+      )
+    `;
     
-    connection.query(`USE ${process.env.DB_NAME}`, (err) => {
-      if (err) throw err;
-      
-      const createUsersTable = `
-        CREATE TABLE IF NOT EXISTS users (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          email VARCHAR(100) UNIQUE NOT NULL,
-          password VARCHAR(255) NOT NULL,
-          avatar_url LONGTEXT
-        )
-      `;
-      
-      const createTransactionsTable = `
-        CREATE TABLE IF NOT EXISTS transactions (
-          id VARCHAR(36) PRIMARY KEY,
-          user_email VARCHAR(100) NOT NULL,
-          description VARCHAR(255) NOT NULL,
-          amount DECIMAL(10, 2) NOT NULL,
-          date DATE NOT NULL,
-          type ENUM('income', 'expense') NOT NULL,
-          category VARCHAR(50) DEFAULT 'Geral',
-          FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
-        )
-      `;
-      
-      connection.query(createUsersTable, (err) => {
-        if (err) console.error('Erro ao criar tabela users:', err);
-        connection.query(createTransactionsTable, (err) => {
-          if (err) console.error('Erro ao criar tabela transactions:', err);
-          console.log('Banco de dados e tabelas prontos para uso!');
-        });
+    const createTransactionsTable = `
+      CREATE TABLE IF NOT EXISTS transactions (
+        id VARCHAR(36) PRIMARY KEY,
+        user_email VARCHAR(100) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        date DATE NOT NULL,
+        type ENUM('income', 'expense') NOT NULL,
+        category VARCHAR(50) DEFAULT 'Geral',
+        FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+      )
+    `;
+    
+    connection.query(createUsersTable, (err) => {
+      if (err) console.error('Erro ao criar tabela users:', err);
+      connection.query(createTransactionsTable, (err) => {
+        if (err) console.error('Erro ao criar tabela transactions:', err);
+        console.log('Banco de dados e tabelas prontos para uso!');
       });
     });
   });
@@ -134,6 +141,8 @@ app.put('/profile', (req, res) => {
   });
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Servidor rodando na porta ${process.env.PORT}`);
+// USAR A PORTA DO RAILWAY OU A 3001
+const port = process.env.PORT || 3001;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Servidor rodando na porta ${port}`);
 });
