@@ -5,13 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "start": "node server/index.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
     "lucide-react": "^0.577.0",
+    "mysql2": "^3.20.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
