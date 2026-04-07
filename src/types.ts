@@ -9,6 +9,13 @@ export interface Transaction {
   category: string;
 }
 
+export interface User {
+  email: string;
+  password?: string;
+  name: string;
+  avatarUrl: string;
+}
+
 export interface UserProfile {
   name: string;
   avatarUrl: string;

@@ -1,12 +1,134 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Settings, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun, LayoutDashboard, History
+  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Settings, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Transaction, TransactionType, UserProfile } from './types';
+import type { Transaction, TransactionType, User } from './types';
+
+function Login({ onLogin }: { onLogin: (user: User) => void }) {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
+
+    if (isRegistering) {
+      if (savedUsers.find(u => u.email === email)) {
+        setError('Este e-mail já está cadastrado.');
+        return;
+      }
+      const newUser: User = { email, password, name: name || 'Usuário', avatarUrl: '' };
+      localStorage.setItem('organizer_users', JSON.stringify([...savedUsers, newUser]));
+      onLogin(newUser);
+    } else {
+      const user = savedUsers.find(u => u.email === email && u.password === password);
+      if (user) {
+        onLogin(user);
+      } else {
+        setError('E-mail ou senha incorretos.');
+      }
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8 bg-[#0f1115]">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img
+          alt="Organizer Logo"
+          src="/logo financeiro sem texto.png"
+          className="mx-auto h-20 w-auto rounded-2xl"
+        />
+        <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-white uppercase">
+          {isRegistering ? 'Criar sua conta' : 'Entrar na sua conta'}
+        </h2>
+      </div>
+
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {isRegistering && (
+            <div>
+              <label className="block text-sm font-medium text-gray-100">Nome</label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
+                placeholder="Seu nome"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-100">E-mail</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
+              placeholder="seu@email.com"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-100">Senha</label>
+              {!isRegistering && (
+                <div className="text-sm">
+                  <a href="#" className="font-semibold text-brand-400 hover:text-brand-300">Esqueceu a senha?</a>
+                </div>
+              )}
+            </div>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {error && <p className="text-rose-500 text-xs font-bold text-center">{error}</p>}
+
+          <div>
+            <button
+              type="submit"
+              className="flex w-full justify-center rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 transition-all active:scale-95"
+            >
+              {isRegistering ? 'Criar conta' : 'Acessar Plataforma'}
+            </button>
+          </div>
+        </form>
+
+        <p className="mt-10 text-center text-sm text-gray-400">
+          {isRegistering ? 'Já tem uma conta?' : 'Ainda não é membro?'}{' '}
+          <button
+            onClick={() => setIsRegistering(!isRegistering)}
+            className="font-semibold text-brand-400 hover:text-brand-300"
+          >
+            {isRegistering ? 'Faça login agora' : 'Comece a organizar agora'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('organizer_logged_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [showSplash, setShowSplash] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -14,17 +136,15 @@ function App() {
     return saved === 'dark';
   });
   
-  // Estado para controlar as abas no Celular (Mobile Only)
   const [activeTab, setActiveTab] = useState<'summary' | 'form' | 'history'>('summary');
-  
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('nubank_transactions');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [user, setUser] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('nubank_user');
-    return saved ? JSON.parse(saved) : { name: 'Usuário', avatarUrl: '' };
-  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    if (currentUser) {
+      const saved = localStorage.getItem(`transactions_${currentUser.email}`);
+      setTransactions(saved ? JSON.parse(saved) : []);
+    }
+  }, [currentUser]);
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
@@ -54,8 +174,21 @@ function App() {
     }
   }, [isDarkMode]);
 
-  useEffect(() => { localStorage.setItem('nubank_transactions', JSON.stringify(transactions)); }, [transactions]);
-  useEffect(() => { localStorage.setItem('nubank_user', JSON.stringify(user)); }, [user]);
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`transactions_${currentUser.email}`, JSON.stringify(transactions));
+    }
+  }, [transactions, currentUser]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('organizer_logged_user');
+    setCurrentUser(null);
+  };
+
+  const handleLogin = (user: User) => {
+    localStorage.setItem('organizer_logged_user', JSON.stringify(user));
+    setCurrentUser(user);
+  };
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => isSameMonth(parseISO(t.date), selectedMonth)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -91,13 +224,11 @@ function App() {
       setTransactions([newTransaction, ...transactions]);
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
-    // No mobile, volta para a aba de histórico após salvar
     if (window.innerWidth < 1024) setActiveTab('history');
   };
 
   const startEdit = (transaction: Transaction) => {
     setEditingId(transaction.id); setDescription(transaction.description); setAmount(transaction.amount.toString()); setType(transaction.type); setDate(transaction.date);
-    // No mobile, muda para a aba do formulário ao clicar em editar
     if (window.innerWidth < 1024) setActiveTab('form');
   };
 
@@ -108,14 +239,25 @@ function App() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader(); reader.onloadend = () => setUser({ ...user, avatarUrl: reader.result as string }); reader.readAsDataURL(file);
+    if (file && currentUser) {
+      const reader = new FileReader(); 
+      reader.onloadend = () => {
+        const newUser = { ...currentUser, avatarUrl: reader.result as string };
+        setCurrentUser(newUser);
+        const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
+        localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
+        localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+      }; 
+      reader.readAsDataURL(file);
     }
   };
 
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className={`relative min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans selection:bg-brand-100 antialiased overflow-x-hidden`}>
-      {/* SPLASH SCREEN */}
       {showSplash && (
         <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center text-center w-full max-w-2xl px-6">
@@ -137,25 +279,22 @@ function App() {
         </div>
       )}
 
-      {/* CONTEÚDO PRINCIPAL */}
       <div className={`transition-all duration-1000 delay-300 ${isFadingOut ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
         <header className={`border-b transition-colors duration-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-4 pb-4 px-4 md:px-6 sticky top-0 z-40 backdrop-blur-md`}>
           <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 w-full lg:w-auto">
-              {/* LOGO E NOME */}
               <div className="flex items-center gap-4 group cursor-pointer self-start md:self-auto">
                 <div className={`w-12 h-12 md:w-16 md:h-16 overflow-hidden rounded-2xl border shadow-sm transition-colors ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
                   <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                 </div>
                 <div>
                   <h2 className={`text-base md:text-xl font-black leading-none tracking-tight uppercase ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Plataforma Oficial</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acesso Particular</p>
                 </div>
               </div>
 
               <div className="hidden md:block h-12 w-px bg-slate-200 dark:bg-slate-800"></div>
 
-              {/* SELETOR DE MESES */}
               <div className="flex items-center bg-brand-600 rounded-lg p-1 shadow-md w-full md:w-auto justify-between md:justify-start">
                 <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-white/10 rounded-md transition-all text-white"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="mx-4 font-bold text-xs md:text-sm capitalize min-w-[120px] text-center text-white tracking-wide">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
@@ -169,18 +308,17 @@ function App() {
                   {isDarkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
                 <button onClick={() => setShowBalance(!showBalance)} className="p-2 md:p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">{showBalance ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}</button>
-                <button className="p-2 md:p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><Settings className="w-4 h-4 md:w-5 md:h-5" /></button>
+                <button onClick={handleLogout} className="p-2 md:p-2.5 hover:bg-rose-100 dark:hover:bg-rose-900/20 rounded-lg text-rose-500 transition-colors"><LogOut className="w-4 h-4 md:w-5 md:h-5" /></button>
               </div>
               
-              {/* PERFIL */}
               <div className="flex items-center gap-3 md:gap-4 text-right">
                 <div className="hidden sm:block">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Bem-vindo,</p>
-                  <p className={`text-sm font-bold leading-none mb-2 ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{user.name}</p>
+                  <p className={`text-sm font-bold leading-none mb-2 ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{currentUser.name}</p>
                   <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-1.5 ml-auto text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest transition-all"><Pencil className="w-3 h-3" /> Ajustar</button>
                 </div>
                 <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl border-2 overflow-hidden flex items-center justify-center cursor-pointer transition-all shadow-sm relative group ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-400' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`} onClick={() => setIsEditingProfile(true)}>
-                  {user.avatarUrl ? <img src={user.avatarUrl} alt="User" className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-slate-400">{getInitials(user.name)}</span>}
+                  {currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt="User" className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-slate-400">{getInitials(currentUser.name)}</span>}
                   <div className="absolute inset-0 bg-brand-600/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Camera className="w-4 h-4 text-brand-600" /></div>
                 </div>
               </div>
@@ -189,8 +327,6 @@ function App() {
         </header>
 
         <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 pb-32 lg:pb-20">
-          
-          {/* TABS MOBILE (Visíveis apenas abaixo de 1024px) */}
           <div className="lg:hidden flex bg-white dark:bg-[#161a20] rounded-2xl p-1 border border-slate-200 dark:border-slate-800 shadow-sm">
             <button onClick={() => setActiveTab('summary')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'summary' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
               <LayoutDashboard className="w-4 h-4" /> Resumo
@@ -204,11 +340,7 @@ function App() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
-            
-            {/* LADO ESQUERDO: RESUMO E FORMULÁRIO */}
             <div className={`lg:col-span-4 space-y-8 ${(activeTab === 'summary' || activeTab === 'form') ? 'block' : 'hidden lg:block'}`}>
-              
-              {/* CARDS RESUMO (Visíveis no mobile apenas na tab 'summary') */}
               <div className={`space-y-6 ${activeTab === 'summary' ? 'block' : 'hidden lg:block'}`}>
                 <div className={`p-8 rounded-2xl border transition-all relative overflow-hidden ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
                   <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
@@ -230,7 +362,6 @@ function App() {
                 </div>
               </div>
 
-              {/* FORMULÁRIO (Visível no mobile apenas na tab 'form') */}
               <div className={`${activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
                 <div className={`p-8 md:p-10 rounded-2xl border transition-all duration-500 shadow-xl lg:sticky lg:top-32 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} ${editingId ? 'ring-4 ring-brand-500/20 border-brand-500' : ''}`}>
                   <div className="flex items-center gap-3 mb-8 md:mb-10"><div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">{editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}</div><h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{editingId ? 'Editar registro' : 'Nova transação'}</h3></div>
@@ -250,7 +381,6 @@ function App() {
               </div>
             </div>
 
-            {/* LADO DIREITO: HISTÓRICO (Visível no mobile apenas na tab 'history') */}
             <div className={`lg:col-span-8 ${activeTab === 'history' ? 'block' : 'hidden lg:block'}`}>
               <div className={`rounded-2xl border transition-all overflow-hidden min-h-[600px] ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
                 <div className={`px-6 md:px-10 py-6 border-b flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm ${isDarkMode ? 'bg-[#161a20]/80 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
@@ -287,7 +417,6 @@ function App() {
         </main>
       </div>
 
-      {/* BARRA DE NAVEGAÇÃO INFERIOR MOBILE */}
       <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-1000 delay-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} border-t px-6 py-3 flex items-center justify-around pb-safe ${isFadingOut ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
         <button onClick={() => setActiveTab('summary')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'summary' ? 'text-brand-600' : 'text-slate-400'}`}>
           <LayoutDashboard className="w-6 h-6" />
@@ -305,7 +434,6 @@ function App() {
         </button>
       </div>
 
-      {/* MODAL CONFIGURAÇÃO */}
       {isEditingProfile && (
         <div className="fixed inset-0 backdrop-blur-md z-[110] flex items-center justify-center p-6 bg-slate-900/60">
           <div className={`w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300 ${isDarkMode ? 'bg-[#161a20]' : 'bg-white'}`}>
@@ -314,8 +442,20 @@ function App() {
               <button onClick={() => setIsEditingProfile(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X className="w-6 h-6" /></button>
             </div>
             <div className="p-10 space-y-10">
-              <div className="flex flex-col items-center gap-6"><div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}><div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden flex items-center justify-center shadow-inner transition-all ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-500' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`}>{user.avatarUrl ? <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-4xl font-black text-slate-200">{getInitials(user.name)}</span>}</div><div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl text-white"><Camera className="w-8 h-8" /></div></div><input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" /></div>
-              <div className="space-y-6"><div><label className="text-[10px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Nome do Gestor</label><input type="text" value={user.name} onChange={(e) => setUser({ ...user, name: e.target.value })} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-brand-500 focus:bg-white'}`} /></div><div className="flex gap-4"><button onClick={() => fileInputRef.current?.click()} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-brand-500'}`}><Upload className="w-4 h-4 mr-2 inline" /> Alterar</button><button onClick={() => setUser({ ...user, avatarUrl: '' })} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-rose-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-500'}`}><Trash2 className="w-4 h-4 mr-2 inline" /> Limpar</button></div></div>
+              <div className="flex flex-col items-center gap-6"><div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}><div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden flex items-center justify-center shadow-inner transition-all ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-500' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`}>{currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-4xl font-black text-slate-200">{getInitials(currentUser.name)}</span>}</div><div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl text-white"><Camera className="w-8 h-8" /></div></div><input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" /></div>
+              <div className="space-y-6"><div><label className="text-[10px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Nome do Gestor</label><input type="text" value={currentUser.name} onChange={(e) => {
+                const newUser = { ...currentUser, name: e.target.value };
+                setCurrentUser(newUser);
+                const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
+                localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
+                localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+              }} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-brand-500 focus:bg-white'}`} /></div><div className="flex gap-4"><button onClick={() => fileInputRef.current?.click()} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-brand-500'}`}><Upload className="w-4 h-4 mr-2 inline" /> Alterar</button><button onClick={() => {
+                const newUser = { ...currentUser, avatarUrl: '' };
+                setCurrentUser(newUser);
+                const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
+                localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
+                localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+              }} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-rose-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-500'}`}><Trash2 className="w-4 h-4 mr-2 inline" /> Limpar</button></div></div>
               <button onClick={() => setIsEditingProfile(false)} className="w-full bg-brand-600 text-white font-black py-6 rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all text-xs uppercase tracking-[0.3em]">Salvar Alterações</button>
             </div>
           </div>
