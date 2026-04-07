@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Settings, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut
+  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Transaction, TransactionType, User } from './types';
+
+const API_URL = 'http://localhost:3001';
 
 function Login({ onLogin }: { onLogin: (user: User) => void }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -13,27 +15,32 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
+    try {
+      const endpoint = isRegistering ? '/register' : '/login';
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
 
-    if (isRegistering) {
-      if (savedUsers.find(u => u.email === email)) {
-        setError('Este e-mail já está cadastrado.');
-        return;
-      }
-      const newUser: User = { email, password, name: name || 'Usuário', avatarUrl: '' };
-      localStorage.setItem('organizer_users', JSON.stringify([...savedUsers, newUser]));
-      onLogin(newUser);
-    } else {
-      const user = savedUsers.find(u => u.email === email && u.password === password);
-      if (user) {
-        onLogin(user);
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isRegistering) {
+          setIsRegistering(false);
+          setError('Conta criada! Faça login agora.');
+        } else {
+          onLogin(data);
+        }
       } else {
-        setError('E-mail ou senha incorretos.');
+        setError(data.message || 'Erro ao processar solicitação');
       }
+    } catch (err) {
+      setError('Servidor fora do ar. Verifique se o backend está rodando.');
     }
   };
 
@@ -97,7 +104,7 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
             />
           </div>
 
-          {error && <p className="text-rose-500 text-xs font-bold text-center">{error}</p>}
+          {error && <p className={`${error.includes('criada') ? 'text-emerald-500' : 'text-rose-500'} text-xs font-bold text-center`}>{error}</p>}
 
           <div>
             <button
@@ -141,8 +148,10 @@ function App() {
 
   useEffect(() => {
     if (currentUser) {
-      const saved = localStorage.getItem(`transactions_${currentUser.email}`);
-      setTransactions(saved ? JSON.parse(saved) : []);
+      fetch(`${API_URL}/transactions/${currentUser.email}`)
+        .then(res => res.json())
+        .then(data => setTransactions(data))
+        .catch(err => console.error('Erro ao buscar transações:', err));
     }
   }, [currentUser]);
 
@@ -174,12 +183,6 @@ function App() {
     }
   }, [isDarkMode]);
 
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(`transactions_${currentUser.email}`, JSON.stringify(transactions));
-    }
-  }, [transactions, currentUser]);
-
   const handleLogout = () => {
     localStorage.removeItem('organizer_logged_user');
     setCurrentUser(null);
@@ -196,8 +199,9 @@ function App() {
 
   const summary = useMemo(() => {
     return filteredTransactions.reduce((acc, t) => {
-      if (t.type === 'income') acc.income += t.amount;
-      else acc.expense += t.amount;
+      const val = Number(t.amount);
+      if (t.type === 'income') acc.income += val;
+      else acc.expense += val;
       acc.total = acc.income - acc.expense;
       return acc;
     }, { income: 0, expense: 0, total: 0 });
@@ -213,15 +217,32 @@ function App() {
     return { label: 'Mediano', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-900/20', icon: <AlertCircle className="w-4 h-4" /> };
   }, [summary]);
 
-  const handleSaveTransaction = (e: React.FormEvent) => {
+  const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !amount || !date) return;
+    if (!description || !amount || !date || !currentUser) return;
+    
+    const numericAmount = Math.abs(Number(amount));
+
     if (editingId) {
-      setTransactions(transactions.map(t => t.id === editingId ? { ...t, description, amount: Math.abs(Number(amount)), type, date } : t));
-      setEditingId(null);
+      try {
+        await fetch(`${API_URL}/transactions/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, amount: numericAmount, date, type })
+        });
+        setTransactions(transactions.map(t => t.id === editingId ? { ...t, description, amount: numericAmount, type, date } : t));
+        setEditingId(null);
+      } catch (err) { console.error(err); }
     } else {
-      const newTransaction: Transaction = { id: crypto.randomUUID(), description, amount: Math.abs(Number(amount)), type, date, category: 'Geral' };
-      setTransactions([newTransaction, ...transactions]);
+      const newTransaction: Transaction = { id: crypto.randomUUID(), description, amount: numericAmount, type, date, category: 'Geral' };
+      try {
+        await fetch(`${API_URL}/transactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newTransaction, user_email: currentUser.email })
+        });
+        setTransactions([newTransaction, ...transactions]);
+      } catch (err) { console.error(err); }
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
     if (window.innerWidth < 1024) setActiveTab('history');
@@ -233,20 +254,34 @@ function App() {
   };
 
   const cancelEdit = () => { setEditingId(null); setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd')); if (window.innerWidth < 1024) setActiveTab('history'); };
-  const removeTransaction = (id: string) => { if (editingId === id) cancelEdit(); setTransactions(transactions.filter(t => t.id !== id)); };
+  
+  const removeTransaction = async (id: string) => {
+    try {
+      await fetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
+      if (editingId === id) cancelEdit();
+      setTransactions(transactions.filter(t => t.id !== id));
+    } catch (err) { console.error(err); }
+  };
+
   const changeMonth = (offset: number) => { const newMonth = new Date(selectedMonth); newMonth.setMonth(newMonth.getMonth() + offset); setSelectedMonth(newMonth); };
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && currentUser) {
       const reader = new FileReader(); 
-      reader.onloadend = () => {
-        const newUser = { ...currentUser, avatarUrl: reader.result as string };
-        setCurrentUser(newUser);
-        const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
-        localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
-        localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+      reader.onloadend = async () => {
+        const avatarUrl = reader.result as string;
+        try {
+          await fetch(`${API_URL}/profile`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: currentUser.name, avatar_url: avatarUrl, email: currentUser.email })
+          });
+          const newUser = { ...currentUser, avatarUrl };
+          setCurrentUser(newUser);
+          localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+        } catch (err) { console.error(err); }
       }; 
       reader.readAsDataURL(file);
     }
@@ -401,7 +436,7 @@ function App() {
                           </div>
                         </div>
                         <div className="flex items-center justify-between sm:justify-end gap-6 md:gap-10 w-full sm:w-auto">
-                          <p className={`font-black text-xl md:text-2xl tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                          <p className={`font-black text-xl md:text-2xl tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                           <div className="flex items-center gap-2">
                             <button onClick={() => startEdit(t)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}><Pencil className="w-5 h-5" /></button>
                             <button onClick={() => removeTransaction(t.id)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}><Trash2 className="w-5 h-5" /></button>
@@ -443,18 +478,29 @@ function App() {
             </div>
             <div className="p-10 space-y-10">
               <div className="flex flex-col items-center gap-6"><div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}><div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden flex items-center justify-center shadow-inner transition-all ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-500' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`}>{currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-4xl font-black text-slate-200">{getInitials(currentUser.name)}</span>}</div><div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl text-white"><Camera className="w-8 h-8" /></div></div><input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" /></div>
-              <div className="space-y-6"><div><label className="text-[10px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Nome do Gestor</label><input type="text" value={currentUser.name} onChange={(e) => {
-                const newUser = { ...currentUser, name: e.target.value };
+              <div className="space-y-6"><div><label className="text-[10px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Nome do Gestor</label><input type="text" value={currentUser.name} onChange={async (e) => {
+                const name = e.target.value;
+                const newUser = { ...currentUser, name };
                 setCurrentUser(newUser);
-                const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
-                localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
                 localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
-              }} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-brand-500 focus:bg-white'}`} /></div><div className="flex gap-4"><button onClick={() => fileInputRef.current?.click()} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-brand-500'}`}><Upload className="w-4 h-4 mr-2 inline" /> Alterar</button><button onClick={() => {
+                try {
+                  await fetch(`${API_URL}/profile`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, avatar_url: currentUser.avatarUrl, email: currentUser.email })
+                  });
+                } catch (err) { console.error(err); }
+              }} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-brand-500 focus:bg-white'}`} /></div><div className="flex gap-4"><button onClick={() => fileInputRef.current?.click()} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-brand-500'}`}><Upload className="w-4 h-4 mr-2 inline" /> Alterar</button><button onClick={async () => {
                 const newUser = { ...currentUser, avatarUrl: '' };
                 setCurrentUser(newUser);
-                const savedUsers: User[] = JSON.parse(localStorage.getItem('organizer_users') || '[]');
-                localStorage.setItem('organizer_users', JSON.stringify(savedUsers.map(u => u.email === newUser.email ? newUser : u)));
                 localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
+                try {
+                  await fetch(`${API_URL}/profile`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: currentUser.name, avatar_url: '', email: currentUser.email })
+                  });
+                } catch (err) { console.error(err); }
               }} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-rose-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-500'}`}><Trash2 className="w-4 h-4 mr-2 inline" /> Limpar</button></div></div>
               <button onClick={() => setIsEditingProfile(false)} className="w-full bg-brand-600 text-white font-black py-6 rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all text-xs uppercase tracking-[0.3em]">Salvar Alterações</button>
             </div>
