@@ -4,10 +4,34 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// CONFIGURAÇÃO DE CORS ROBUSTA
+const allowedOrigins = [
+  'https://organizer-system.vercel.app',
+  'http://localhost:5173',
+  'http://192.168.0.104:5173'
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '50mb' }));
 
-// CONFIGURAÇÃO DINÂMICA (RAILWAY OU LOCAL)
+// Rota de teste simples
+app.get('/', (req, res) => {
+  res.send('Servidor do Organizador Financeiro está ONLINE!');
+});
+
 const dbConfig = {
   host: process.env.MYSQLHOST || process.env.DB_HOST,
   user: process.env.MYSQLUSER || process.env.DB_USER,
@@ -141,7 +165,6 @@ app.put('/profile', (req, res) => {
   });
 });
 
-// USAR A PORTA DO RAILWAY OU A 3001
 const port = process.env.PORT || 3001;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor rodando na porta ${port}`);
