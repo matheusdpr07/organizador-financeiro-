@@ -5,7 +5,6 @@ require('dotenv').config();
 
 const app = express();
 
-// CONFIGURAÇÃO DE CORS ROBUSTA
 const allowedOrigins = [
   'https://organizer-system.vercel.app',
   'http://localhost:5173',
@@ -17,7 +16,7 @@ app.use(cors({
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Não permitido pelo CORS'));
+      callback(null, true); // Temporariamente aceitar tudo para debugar
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -27,12 +26,10 @@ app.use(cors({
 
 app.use(express.json({ limit: '50mb' }));
 
-// Rota de teste simples
-app.get('/', (req, res) => {
-  res.send('Servidor do Organizador Financeiro está ONLINE!');
-});
+app.get('/', (req, res) => res.send('Backend Online!'));
 
-const dbConfig = {
+// TENTAR USAR A URL COMPLETA DO RAILWAY (MAIS ESTÁVEL)
+const dbConfig = process.env.MYSQL_URL || {
   host: process.env.MYSQLHOST || process.env.DB_HOST,
   user: process.env.MYSQLUSER || process.env.DB_USER,
   password: process.env.MYSQLPASSWORD || process.env.DB_PASS,
@@ -44,54 +41,37 @@ const connection = mysql.createConnection(dbConfig);
 
 connection.connect(err => {
   if (err) {
-    console.error('Erro ao conectar ao MySQL:', err);
+    console.error('ERRO DE CONEXÃO MYSQL:', err);
     return;
   }
+  console.log('Conectado ao MySQL!');
   
-  console.log('Conectado ao MySQL! Preparando banco de dados...');
+  // CRIAR TABELAS APENAS SE NÃO EXISTIREM
+  const createUsersTable = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      avatar_url LONGTEXT
+    )
+  `;
   
-  const dbName = process.env.MYSQLDATABASE || process.env.DB_NAME;
-
-  connection.query(`USE ${dbName}`, (err) => {
-    if (err) {
-      console.log('Banco não encontrado, tentando criar...');
-      connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`, (err) => {
-        if (err) throw err;
-        connection.query(`USE ${dbName}`);
-      });
-    }
-      
-    const createUsersTable = `
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        avatar_url LONGTEXT
-      )
-    `;
-    
-    const createTransactionsTable = `
-      CREATE TABLE IF NOT EXISTS transactions (
-        id VARCHAR(36) PRIMARY KEY,
-        user_email VARCHAR(100) NOT NULL,
-        description VARCHAR(255) NOT NULL,
-        amount DECIMAL(10, 2) NOT NULL,
-        date DATE NOT NULL,
-        type ENUM('income', 'expense') NOT NULL,
-        category VARCHAR(50) DEFAULT 'Geral',
-        FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
-      )
-    `;
-    
-    connection.query(createUsersTable, (err) => {
-      if (err) console.error('Erro ao criar tabela users:', err);
-      connection.query(createTransactionsTable, (err) => {
-        if (err) console.error('Erro ao criar tabela transactions:', err);
-        console.log('Banco de dados e tabelas prontos para uso!');
-      });
-    });
-  });
+  const createTransactionsTable = `
+    CREATE TABLE IF NOT EXISTS transactions (
+      id VARCHAR(36) PRIMARY KEY,
+      user_email VARCHAR(100) NOT NULL,
+      description VARCHAR(255) NOT NULL,
+      amount DECIMAL(10, 2) NOT NULL,
+      date DATE NOT NULL,
+      type ENUM('income', 'expense') NOT NULL,
+      category VARCHAR(50) DEFAULT 'Geral',
+      FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+    )
+  `;
+  
+  connection.query(createUsersTable);
+  connection.query(createTransactionsTable);
 });
 
 app.post('/login', (req, res) => {
