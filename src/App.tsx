@@ -41,7 +41,7 @@ function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8 bg-[#0f1115]">
+    <div className="flex min-h-[100dvh] flex-col justify-center px-6 py-12 lg:px-8 bg-[#0f1115]">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-2xl border border-white/10">
           <img alt="Organizer Logo" src="/logo financeiro sem texto.png" className="w-full h-full object-cover" />
@@ -56,21 +56,21 @@ function Login() {
           {isRegistering && (
             <div>
               <label className="block text-sm font-medium text-gray-100">Nome</label>
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="Seu nome" />
+              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="Seu nome" />
             </div>
           )}
           <div>
             <label className="block text-sm font-medium text-gray-100">E-mail</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="seu@email.com" />
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="seu@email.com" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-100">Senha</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="••••••••" />
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="••••••••" />
           </div>
 
-          {error && <p className={`text-xs font-bold text-center ${error.includes('confirmar') ? 'text-emerald-500' : 'text-rose-500'}`}>{error}</p>}
+          {error && <p className={`text-xs font-bold text-center p-3 rounded-lg ${error.includes('confirmar') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{error}</p>}
 
-          <button type="submit" disabled={loading} className="flex w-full justify-center rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 transition-all active:scale-95 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="flex w-full justify-center rounded-md bg-brand-600 px-3 py-3 text-sm font-bold text-white shadow-sm hover:bg-brand-500 transition-all active:scale-95 disabled:opacity-50">
             {loading ? 'Processando...' : isRegistering ? 'Criar conta' : 'Acessar Plataforma'}
           </button>
         </form>
@@ -110,14 +110,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (session) fetchTransactions();
+    if (session) {
+      const fetchTransactions = async () => {
+        const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+        if (error) console.error(error);
+        else setTransactions(data || []);
+      };
+      fetchTransactions();
+    }
   }, [session]);
-
-  const fetchTransactions = async () => {
-    const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-    if (error) console.error(error);
-    else setTransactions(data || []);
-  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -133,6 +134,12 @@ function App() {
   }, [isDarkMode]);
 
   const handleLogout = () => supabase.auth.signOut();
+
+  const changeMonth = (offset: number) => {
+    const newMonth = new Date(selectedMonth);
+    newMonth.setMonth(newMonth.getMonth() + offset);
+    setSelectedMonth(newMonth);
+  };
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => isSameMonth(parseISO(t.date), selectedMonth));
@@ -194,212 +201,230 @@ function App() {
   if (!session) return <Login />;
 
   const userMetadata = session.user.user_metadata;
+  const userName = userMetadata?.name || session.user.email?.split('@')[0] || 'Usuário';
 
   return (
-    <div className={`relative min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans antialiased overflow-x-hidden`}>
-      {/* SPLASH SCREEN */}
+    <div className={`relative flex flex-col h-[100dvh] transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans antialiased overflow-hidden`}>
       {showSplash && (
         <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center text-center w-full max-w-2xl px-6">
             <div className="relative mb-8 animate-scale-in">
-              <div className={`w-48 h-48 overflow-hidden rounded-[40px] shadow-2xl border ${isDarkMode ? 'border-slate-800 bg-[#161a20]' : 'border-slate-50 bg-white'}`}>
+              <div className={`w-40 h-40 overflow-hidden rounded-[40px] shadow-2xl border ${isDarkMode ? 'border-slate-800 bg-[#161a20]' : 'border-slate-50 bg-white'}`}>
                 <img src="/logo financeiro sem texto.png" alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-            <h2 className={`text-4xl md:text-7xl font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+            <h2 className={`text-4xl font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
           </div>
         </div>
       )}
 
-      <div className={`transition-all duration-1000 ${isFadingOut ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <header className={`border-b ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-4 pb-4 px-4 md:px-6 sticky top-0 z-40 backdrop-blur-md`}>
-          <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4 w-full lg:w-auto">
-              <img src="/logo financeiro sem texto.png" className="w-12 h-12 rounded-2xl" alt="Logo" />
-              <h2 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-              <div className="flex items-center bg-brand-600 rounded-lg p-1 ml-auto lg:ml-4">
-                <button onClick={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() - 1)))} className="p-1 text-white"><ChevronLeft className="w-4 h-4" /></button>
-                <span className="mx-4 font-bold text-xs text-white capitalize min-w-[100px] text-center">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
-                <button onClick={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() + 1)))} className="p-1 text-white"><ChevronRight className="w-4 h-4" /></button>
+      {/* HEADER FIXO RESTAURADO */}
+      <header className={`shrink-0 border-b ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-safe px-4 md:px-6 z-40 backdrop-blur-md`}>
+        <div className="max-w-6xl mx-auto h-20 md:h-24 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 md:gap-8">
+            {/* LOGO E NOME ORIGINAIS */}
+            <div className="flex items-center gap-3 md:gap-4 group cursor-pointer">
+              <div className={`w-10 h-10 md:w-14 md:h-14 overflow-hidden rounded-xl md:rounded-2xl border shadow-sm transition-colors ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
+                <img src="/logo financeiro sem texto.png" alt="Logo" className="w-full h-full object-cover" />
+              </div>
+              <div className="hidden xs:block">
+                <h2 className={`text-sm md:text-xl font-black leading-none tracking-tight uppercase ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+                <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Plataforma Oficial</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between lg:justify-end gap-4 w-full lg:w-auto">
-              <div className="flex items-center gap-2 pr-4 border-r border-slate-800/10 dark:border-slate-800">
-                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-lg bg-slate-800/10 dark:bg-slate-800 text-brand-600 dark:text-amber-400">
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </button>
-                <button onClick={() => setShowBalance(!showBalance)} className="p-2 text-slate-400">{showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</button>
-                <button onClick={handleLogout} className="p-2 text-rose-500"><LogOut className="w-4 h-4" /></button>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:block text-right">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">Gestor,</p>
-                  <p className="text-sm font-bold">{userMetadata.name || 'Usuário'}</p>
-                </div>
-                <div onClick={() => setIsEditingProfile(true)} className="w-10 h-10 rounded-xl bg-brand-600/10 border-2 border-brand-600/20 flex items-center justify-center cursor-pointer overflow-hidden">
-                  <span className="text-xs font-bold text-brand-600">{getInitials(userMetadata.name || 'Usuário')}</span>
-                </div>
-              </div>
+            <div className="hidden sm:block h-10 w-px bg-slate-200 dark:bg-slate-800"></div>
+
+            {/* SELETOR DE MESES ORIGINAL */}
+            <div className="flex items-center bg-brand-600 rounded-lg p-0.5 md:p-1 shadow-md shadow-brand-600/20">
+              <button onClick={() => changeMonth(-1)} className="p-1.5 text-white active:scale-90 transition-transform"><ChevronLeft className="w-4 h-4" /></button>
+              <span className="mx-2 font-bold text-[10px] md:text-xs text-white capitalize min-w-[80px] md:min-w-[120px] text-center tracking-wide">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
+              <button onClick={() => changeMonth(1)} className="p-1.5 text-white active:scale-90 transition-transform"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
-        </header>
 
-        <main className="max-w-6xl mx-auto px-4 py-6 md:py-8 space-y-8 pb-32 lg:pb-8">
-          {/* TABS MOBILE */}
-          <div className="lg:hidden flex bg-white dark:bg-[#161a20] rounded-2xl p-1 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <button onClick={() => setActiveTab('summary')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'summary' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <LayoutDashboard className="w-4 h-4" /> Resumo
+          <div className="flex items-center gap-2 md:gap-4">
+            <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-lg transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-100 text-slate-500'}`}>
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <button onClick={() => setActiveTab('form')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'form' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <PlusCircle className="w-4 h-4" /> Lançar
+            <button onClick={handleLogout} className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"><LogOut className="w-4 h-4" /></button>
+            <div onClick={() => setIsEditingProfile(true)} className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center cursor-pointer transition-all ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
+              <span className="text-xs font-bold text-brand-600">{getInitials(userName)}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* CONTEÚDO PRINCIPAL COM SCROLL */}
+      <main className="flex-1 overflow-y-auto scroll-smooth pb-32 lg:pb-8 pt-6 md:pt-8 px-4">
+        <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
+          
+          {/* TABS MOBILE INTEGRADA NO CONTEÚDO */}
+          <div className="lg:hidden flex bg-white dark:bg-[#161a20] rounded-2xl p-1 border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30">
+            <button onClick={() => setActiveTab('summary')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'summary' ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20' : 'text-slate-400'}`}>
+              <LayoutDashboard className="w-3.5 h-3.5" /> Início
             </button>
-            <button onClick={() => setActiveTab('history')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'history' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <History className="w-4 h-4" /> Extrato
+            <button onClick={() => setActiveTab('form')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'form' ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20' : 'text-slate-400'}`}>
+              <PlusCircle className="w-3.5 h-3.5" /> Lançar
+            </button>
+            <button onClick={() => setActiveTab('history')} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'history' ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20' : 'text-slate-400'}`}>
+              <History className="w-3.5 h-3.5" /> Extrato
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className={`lg:col-span-4 space-y-6 ${activeTab === 'summary' || activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+            <div className={`lg:col-span-4 space-y-6 ${(activeTab === 'summary' || activeTab === 'form') ? 'block' : 'hidden lg:block'}`}>
               
               {/* CARD SALDO */}
-              <div className={`p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} relative overflow-hidden ${activeTab === 'summary' ? 'block' : 'hidden lg:block'}`}>
+              <div className={`p-6 md:p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} relative overflow-hidden ${activeTab === 'summary' ? 'block' : 'hidden lg:block'}`}>
                 <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Patrimônio Líquido</p>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-widest">Patrimônio Líquido</p>
+                  <button onClick={() => setShowBalance(!showBalance)} className="text-slate-400 active:scale-90 transition-all">{showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</button>
+                </div>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold">{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color}`}>
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color} border border-current/10`}>
                     {financialStatus.icon} {financialStatus.label}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/10 dark:border-slate-800">
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">Receitas</p>
-                    <p className="text-emerald-500 font-bold">{showBalance ? `+ ${summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><TrendingUp className="w-4 h-4" /></div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 uppercase font-bold">Receitas</p>
+                      <p className="text-xs md:text-sm text-emerald-500 font-black">{showBalance ? `+${summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">Despesas</p>
-                    <p className="text-rose-500 font-bold">{showBalance ? `- ${summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center"><TrendingUp className="w-4 h-4 rotate-180" /></div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 uppercase font-bold">Despesas</p>
+                      <p className="text-xs md:text-sm text-rose-500 font-black">{showBalance ? `-${summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* FORMULÁRIO */}
-              <div className={`p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} ${activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
+              <div className={`p-6 md:p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} ${activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-brand-600/10 text-brand-600 flex items-center justify-center">
                     {editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}
                   </div>
-                  <h3 className="font-bold">{editingId ? 'Editar registro' : 'Nova transação'}</h3>
+                  <h3 className="font-bold text-sm md:text-base">{editingId ? 'Editar registro' : 'Nova transação'}</h3>
                 </div>
-                <form onSubmit={handleSaveTransaction} className="space-y-4">
+                <form onSubmit={handleSaveTransaction} className="space-y-4 md:space-y-5">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1">Descrição</label>
-                    <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Salário" className="w-full p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500" />
+                    <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block ml-1 tracking-widest">Descrição</label>
+                    <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Mercado" className="w-full p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 text-sm" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1">Valor</label>
-                      <input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="w-full p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none font-bold" />
+                      <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block ml-1 tracking-widest">Valor</label>
+                      <input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="w-full p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none font-bold text-base" />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block ml-1">Data</label>
-                      <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700" />
+                      <label className="text-[9px] font-bold text-slate-400 uppercase mb-1.5 block ml-1 tracking-widest">Data</label>
+                      <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 text-sm" />
                     </div>
                   </div>
                   <div className="flex gap-2 p-1 bg-black/5 dark:bg-slate-900 rounded-xl">
-                    <button type="button" onClick={() => setType('income')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${type === 'income' ? 'bg-white dark:bg-emerald-500 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-400'}`}>RECEITA</button>
-                    <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${type === 'expense' ? 'bg-white dark:bg-rose-500 text-rose-600 dark:text-white shadow-sm' : 'text-slate-400'}`}>DESPESA</button>
+                    <button type="button" onClick={() => setType('income')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black transition-all ${type === 'income' ? 'bg-white dark:bg-emerald-500 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-400'}`}>RECEITA</button>
+                    <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2.5 rounded-lg text-[10px] font-black transition-all ${type === 'expense' ? 'bg-white dark:bg-rose-500 text-rose-600 dark:text-white shadow-sm' : 'text-slate-400'}`}>DESPESA</button>
                   </div>
-                  <button type="submit" className="w-full py-4 rounded-xl bg-brand-600 text-white font-bold uppercase text-xs tracking-widest hover:brightness-110 transition-all shadow-lg shadow-brand-600/20">
+                  <button type="submit" className="w-full py-4 rounded-xl bg-brand-600 text-white font-bold uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-lg shadow-brand-600/20 active:scale-95">
                     {editingId ? 'Salvar Edição' : 'Confirmar Lançamento'}
                   </button>
-                  {editingId && <button type="button" onClick={() => { setEditingId(null); setDescription(''); setAmount(''); }} className="w-full py-2 text-slate-400 text-[10px] uppercase font-bold">Cancelar</button>}
+                  {editingId && <button type="button" onClick={() => { setEditingId(null); setDescription(''); setAmount(''); }} className="w-full py-2 text-slate-400 text-[9px] font-black uppercase">Cancelar</button>}
                 </form>
               </div>
             </div>
 
             {/* LISTAGEM */}
             <div className={`lg:col-span-8 ${activeTab === 'history' ? 'block' : 'hidden lg:block'}`}>
-              <div className={`rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} overflow-hidden min-h-[500px]`}>
-                <div className="p-6 border-b border-slate-800/10 dark:border-slate-800 flex justify-between items-center sticky top-0 bg-inherit z-10 backdrop-blur-md">
-                  <h3 className="text-sm font-black uppercase tracking-widest">Extrato Mensal</h3>
-                  <span className="text-[10px] font-bold bg-brand-600/10 text-brand-600 px-3 py-1 rounded-full border border-brand-600/20">{filteredTransactions.length} registros</span>
+              <div className={`rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} overflow-hidden min-h-[400px]`}>
+                <div className="p-5 border-b border-slate-800/10 dark:border-slate-800 flex justify-between items-center bg-inherit">
+                  <h3 className="text-xs font-black uppercase tracking-widest">Extrato de Operações</h3>
+                  <span className="text-[9px] font-black bg-brand-600/10 text-brand-600 px-3 py-1.5 rounded-lg border border-brand-600/20 uppercase">{filteredTransactions.length} registros</span>
                 </div>
                 <div className="divide-y divide-slate-800/10 dark:divide-slate-800">
                   {filteredTransactions.map((t) => (
-                    <div key={t.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-all gap-4">
+                    <div key={t.id} className="p-5 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-all">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          <TrendingUp className={`w-6 h-6 ${t.type === 'expense' ? 'rotate-180' : ''}`} />
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
+                          <TrendingUp className={`w-5 h-5 ${t.type === 'expense' ? 'rotate-180' : ''}`} />
                         </div>
                         <div>
-                          <p className="font-bold text-base uppercase tracking-tight">{t.description}</p>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
+                          <p className="font-bold text-sm uppercase tracking-tighter truncate max-w-[120px] xs:max-w-none">{t.description}</p>
+                          <p className="text-[9px] text-slate-500 font-black uppercase">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between w-full sm:w-auto gap-6">
-                        <p className={`font-black text-xl ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                          {t.type === 'income' ? '+' : '-'} R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      <div className="flex items-center gap-4">
+                        <p className={`font-black text-sm md:text-base ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {t.type === 'income' ? '+' : '-'} {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
-                        <div className="flex gap-2">
-                          <button onClick={() => startEdit(t)} className="p-2 text-slate-400 hover:text-brand-600 transition-colors"><Pencil className="w-4 h-4" /></button>
-                          <button onClick={() => removeTransaction(t.id)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        <div className="flex gap-1">
+                          <button onClick={() => startEdit(t)} className="p-2 text-slate-400 hover:text-brand-600 active:scale-90 transition-all"><Pencil className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => removeTransaction(t.id)} className="p-2 text-slate-400 hover:text-rose-500 active:scale-90 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       </div>
                     </div>
                   ))}
                   {filteredTransactions.length === 0 && (
-                    <div className="py-32 text-center text-slate-500 opacity-50 flex flex-col items-center gap-4">
-                      <Calendar className="w-12 h-12" />
-                      <p className="text-xs font-bold uppercase tracking-widest">Nenhuma atividade neste mês</p>
+                    <div className="py-24 text-center text-slate-500 opacity-50 flex flex-col items-center gap-4">
+                      <Calendar className="w-10 h-10" />
+                      <p className="text-[10px] font-black uppercase tracking-widest">Sem atividades este mês</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
-        </main>
-
-        {/* BARRA DE NAVEGAÇÃO INFERIOR MOBILE */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#161a20] border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-around pb-safe">
-          <button onClick={() => setActiveTab('summary')} className={`flex flex-col items-center gap-1 ${activeTab === 'summary' ? 'text-brand-600' : 'text-slate-400'}`}>
-            <LayoutDashboard className="w-6 h-6" />
-            <span className="text-[10px] font-bold uppercase">Início</span>
-          </button>
-          <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center gap-1 ${activeTab === 'form' ? 'text-brand-600' : 'text-slate-400'}`}>
-            <div className="p-3 rounded-full bg-brand-600 text-white -mt-8 shadow-xl border-4 border-[#f4f5f7] dark:border-[#0f1115]">
-              <Plus className="w-6 h-6" />
-            </div>
-            <span className="text-[10px] font-bold uppercase">Lançar</span>
-          </button>
-          <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 ${activeTab === 'history' ? 'text-brand-600' : 'text-slate-400'}`}>
-            <History className="w-6 h-6" />
-            <span className="text-[10px] font-bold uppercase">Extrato</span>
-          </button>
         </div>
+      </main>
+
+      {/* BARRA DE NAVEGAÇÃO INFERIOR ESTILO APP */}
+      <div className="lg:hidden shrink-0 bg-white dark:bg-[#161a20] border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-safe flex items-center justify-around z-50">
+        <button onClick={() => setActiveTab('summary')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'summary' ? 'text-brand-600 scale-110' : 'text-slate-400 opacity-60'}`}>
+          <LayoutDashboard className="w-6 h-6" />
+          <span className="text-[9px] font-black uppercase tracking-tighter">Início</span>
+        </button>
+        <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'form' ? 'text-brand-600' : 'text-slate-400'}`}>
+          <div className="p-3 rounded-full bg-brand-600 text-white -mt-8 shadow-xl border-4 border-[#f4f5f7] dark:border-[#0f1115] active:scale-90 transition-transform">
+            <Plus className="w-6 h-6" />
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-tighter">Lançar</span>
+        </button>
+        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-brand-600 scale-110' : 'text-slate-400 opacity-60'}`}>
+          <History className="w-6 h-6" />
+          <span className="text-[9px] font-black uppercase tracking-tighter">Extrato</span>
+        </button>
       </div>
 
-      {/* MODAL CONFIGURAÇÃO */}
+      {/* MODAL CONFIGURAÇÃO AFINADO */}
       {isEditingProfile && (
         <div className="fixed inset-0 backdrop-blur-md z-[110] flex items-center justify-center p-6 bg-slate-900/60">
-          <div className={`w-full max-w-md rounded-3xl overflow-hidden shadow-2xl ${isDarkMode ? 'bg-[#161a20]' : 'bg-white'}`}>
-            <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-              <h2 className="text-lg font-black uppercase tracking-widest">Configuração</h2>
-              <button onClick={() => setIsEditingProfile(false)} className="text-slate-400 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+          <div className={`w-full max-w-md rounded-3xl overflow-hidden shadow-2xl ${isDarkMode ? 'bg-[#161a20]' : 'bg-white'} animate-in zoom-in duration-200`}>
+            <div className="p-6 border-b border-slate-800/10 dark:border-slate-800 flex justify-between items-center">
+              <h2 className="text-sm font-black uppercase tracking-widest">Configuração do Gestor</h2>
+              <button onClick={() => setIsEditingProfile(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="w-6 h-6" /></button>
             </div>
-            <div className="p-8 space-y-6 text-center">
+            <div className="p-8 space-y-8 text-center">
               <div className="relative w-24 h-24 mx-auto group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <div className="w-full h-full rounded-2xl bg-brand-600/10 border-2 border-brand-600/20 flex items-center justify-center overflow-hidden">
-                  <span className="text-2xl font-bold text-brand-600">{getInitials(userMetadata.name || 'Usuário')}</span>
+                <div className="w-full h-full rounded-2xl bg-brand-600/10 border-2 border-brand-600/20 flex items-center justify-center overflow-hidden transition-colors group-hover:border-brand-500">
+                  <span className="text-2xl font-black text-brand-600">{getInitials(userName)}</span>
                 </div>
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
                   <Camera className="text-white w-6 h-6" />
                 </div>
                 <input type="file" ref={fileInputRef} className="hidden" />
               </div>
-              <p className="text-sm font-bold opacity-50">Configurações de perfil em desenvolvimento</p>
-              <button onClick={() => setIsEditingProfile(false)} className="w-full bg-brand-600 text-white font-black py-4 rounded-xl shadow-lg hover:brightness-110 transition-all text-xs uppercase tracking-widest">Salvar e Fechar</button>
+              <div className="space-y-2">
+                <p className="text-sm font-black uppercase tracking-tighter">{userName}</p>
+                <p className="text-[10px] font-bold text-slate-500">{session.user.email}</p>
+              </div>
+              <button onClick={() => setIsEditingProfile(false)} className="w-full bg-brand-600 text-white font-black py-4 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all text-[10px] uppercase tracking-[0.2em]">Salvar Alterações</button>
             </div>
           </div>
         </div>
