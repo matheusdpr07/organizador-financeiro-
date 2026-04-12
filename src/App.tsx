@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  PlusCircle, TrendingUp, TrendingDown, Trash2, Calendar, Plus, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Camera, Upload, X, Pencil, Save, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut
+  TrendingUp, Trash2, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Sparkles, Moon, Sun, LogOut
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -89,9 +89,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('organizer_theme') === 'dark');
-  const [activeTab, setActiveTab] = useState<'summary' | 'form' | 'history'>('summary');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -99,7 +97,6 @@ function App() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -108,14 +105,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (session) fetchTransactions();
+    if (session) {
+      const fetchTransactions = async () => {
+        const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+        if (error) console.error(error);
+        else setTransactions(data || []);
+      };
+      fetchTransactions();
+    }
   }, [session]);
-
-  const fetchTransactions = async () => {
-    const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-    if (error) console.error(error);
-    else setTransactions(data || []);
-  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -174,7 +172,6 @@ function App() {
       if (!error && data) setTransactions([data[0], ...transactions]);
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
-    if (window.innerWidth < 1024) setActiveTab('history');
   };
 
   const removeTransaction = async (id: string) => {
