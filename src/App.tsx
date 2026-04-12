@@ -4,54 +4,46 @@ import {
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Transaction, TransactionType, User } from './types';
+import { supabase } from './supabase';
+import type { Transaction, TransactionType } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.104:3001';
-
-function Login({ onLogin }: { onLogin: (user: User) => void }) {
+function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      const endpoint = isRegistering ? '/register' : '/login';
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (isRegistering) {
-          setIsRegistering(false);
-          setError('Conta criada! Faça login agora.');
-        } else {
-          onLogin(data);
-        }
+      if (isRegistering) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name: name || 'Usuário' } }
+        });
+        if (error) throw error;
+        setError('Verifique seu e-mail para confirmar o cadastro!');
       } else {
-        setError(data.message || 'Erro ao processar solicitação');
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
       }
-    } catch (err) {
-      setError('Servidor fora do ar. Verifique se o backend está rodando.');
+    } catch (err: any) {
+      setError(err.message || 'Erro ao processar solicitação');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen flex-col justify-center px-6 py-12 lg:px-8 bg-[#0f1115]">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <img
-          alt="Organizer Logo"
-          src="/logo financeiro sem texto.png"
-          className="mx-auto h-20 w-auto rounded-2xl"
-        />
+        <img alt="Organizer Logo" src="/logo financeiro sem texto.png" className="mx-auto h-20 w-auto rounded-2xl" />
         <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-white uppercase">
           {isRegistering ? 'Criar sua conta' : 'Entrar na sua conta'}
         </h2>
@@ -62,66 +54,28 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
           {isRegistering && (
             <div>
               <label className="block text-sm font-medium text-gray-100">Nome</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
-                placeholder="Seu nome"
-              />
+              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="Seu nome" />
             </div>
           )}
-
           <div>
             <label className="block text-sm font-medium text-gray-100">E-mail</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
-              placeholder="seu@email.com"
-            />
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="seu@email.com" />
           </div>
-
           <div>
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-100">Senha</label>
-              {!isRegistering && (
-                <div className="text-sm">
-                  <a href="#" className="font-semibold text-brand-400 hover:text-brand-300">Esqueceu a senha?</a>
-                </div>
-              )}
-            </div>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:outline-brand-500"
-              placeholder="••••••••"
-            />
+            <label className="block text-sm font-medium text-gray-100">Senha</label>
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-2 block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 outline-white/10 focus:outline-2 focus:outline-brand-500" placeholder="••••••••" />
           </div>
 
-          {error && <p className={`${error.includes('criada') ? 'text-emerald-500' : 'text-rose-500'} text-xs font-bold text-center`}>{error}</p>}
+          {error && <p className={`text-xs font-bold text-center ${error.includes('confirmar') ? 'text-emerald-500' : 'text-rose-500'}`}>{error}</p>}
 
-          <div>
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600 transition-all active:scale-95"
-            >
-              {isRegistering ? 'Criar conta' : 'Acessar Plataforma'}
-            </button>
-          </div>
+          <button type="submit" disabled={loading} className="flex w-full justify-center rounded-md bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 transition-all active:scale-95 disabled:opacity-50">
+            {loading ? 'Processando...' : isRegistering ? 'Criar conta' : 'Acessar Plataforma'}
+          </button>
         </form>
 
         <p className="mt-10 text-center text-sm text-gray-400">
           {isRegistering ? 'Já tem uma conta?' : 'Ainda não é membro?'}{' '}
-          <button
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="font-semibold text-brand-400 hover:text-brand-300"
-          >
+          <button onClick={() => setIsRegistering(!isRegistering)} className="font-semibold text-brand-400 hover:text-brand-300">
             {isRegistering ? 'Faça login agora' : 'Comece a organizar agora'}
           </button>
         </p>
@@ -131,30 +85,12 @@ function Login({ onLogin }: { onLogin: (user: User) => void }) {
 }
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('organizer_logged_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
+  const [session, setSession] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
   const [isFadingOut, setIsFadingOut] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('organizer_theme');
-    return saved === 'dark';
-  });
-  
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('organizer_theme') === 'dark');
   const [activeTab, setActiveTab] = useState<'summary' | 'form' | 'history'>('summary');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    if (currentUser) {
-      fetch(`${API_URL}/transactions/${currentUser.email}`)
-        .then(res => res.json())
-        .then(data => setTransactions(data))
-        .catch(err => console.error('Erro ao buscar transações:', err));
-    }
-  }, [currentUser]);
-
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [description, setDescription] = useState('');
@@ -166,6 +102,22 @@ function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) fetchTransactions();
+  }, [session]);
+
+  const fetchTransactions = async () => {
+    const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+    if (error) console.error(error);
+    else setTransactions(data || []);
+  };
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setIsFadingOut(true);
       setTimeout(() => setShowSplash(false), 1000);
@@ -174,27 +126,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('organizer_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('organizer_theme', 'light');
-    }
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('organizer_theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('organizer_logged_user');
-    setCurrentUser(null);
-  };
-
-  const handleLogin = (user: User) => {
-    localStorage.setItem('organizer_logged_user', JSON.stringify(user));
-    setCurrentUser(user);
-  };
+  const handleLogout = () => supabase.auth.signOut();
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(t => isSameMonth(parseISO(t.date), selectedMonth)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return transactions.filter(t => isSameMonth(parseISO(t.date), selectedMonth));
   }, [transactions, selectedMonth]);
 
   const summary = useMemo(() => {
@@ -209,304 +148,148 @@ function App() {
 
   const financialStatus = useMemo(() => {
     const { income, total } = summary;
-    if (total < 0) return { label: 'Crítico', color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-900/20', icon: <XCircle className="w-4 h-4" /> };
-    if (income === 0) return { label: 'Iniciante', color: 'text-neutral-500 dark:text-neutral-400', bgColor: 'bg-neutral-50 dark:bg-neutral-800', icon: <Sparkles className="w-4 h-4" /> };
+    if (total < 0) return { label: 'Crítico', color: 'text-rose-600', bgColor: 'bg-rose-50', icon: <XCircle className="w-4 h-4" /> };
+    if (income === 0) return { label: 'Iniciante', color: 'text-neutral-500', bgColor: 'bg-neutral-50', icon: <Sparkles className="w-4 h-4" /> };
     const ratio = total / income;
-    if (ratio >= 0.5) return { label: 'Rei', color: 'text-brand-600 dark:text-brand-400', bgColor: 'bg-brand-50 dark:bg-brand-900/20', icon: <Crown className="w-4 h-4" /> };
-    if (ratio >= 0.3) return { label: 'Ótimo', color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50 dark:bg-emerald-900/20', icon: <Trophy className="w-4 h-4" /> };
-    return { label: 'Mediano', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-900/20', icon: <AlertCircle className="w-4 h-4" /> };
+    if (ratio >= 0.5) return { label: 'Rei', color: 'text-brand-600', bgColor: 'bg-brand-50', icon: <Crown className="w-4 h-4" /> };
+    if (ratio >= 0.3) return { label: 'Ótimo', color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: <Trophy className="w-4 h-4" /> };
+    return { label: 'Mediano', color: 'text-amber-600', bgColor: 'bg-amber-50', icon: <AlertCircle className="w-4 h-4" /> };
   }, [summary]);
 
   const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description || !amount || !date || !currentUser) return;
-    
+    if (!description || !amount || !date || !session) return;
     const numericAmount = Math.abs(Number(amount));
 
     if (editingId) {
-      try {
-        await fetch(`${API_URL}/transactions/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description, amount: numericAmount, date, type })
-        });
+      const { error } = await supabase.from('transactions').update({ description, amount: numericAmount, date, type }).eq('id', editingId);
+      if (!error) {
         setTransactions(transactions.map(t => t.id === editingId ? { ...t, description, amount: numericAmount, type, date } : t));
         setEditingId(null);
-      } catch (err) { console.error(err); }
+      }
     } else {
-      const newTransaction: Transaction = { id: crypto.randomUUID(), description, amount: numericAmount, type, date, category: 'Geral' };
-      try {
-        await fetch(`${API_URL}/transactions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...newTransaction, user_email: currentUser.email })
-        });
-        setTransactions([newTransaction, ...transactions]);
-      } catch (err) { console.error(err); }
+      const { data, error } = await supabase.from('transactions').insert([{ 
+        description, amount: numericAmount, type, date, user_id: session.user.id 
+      }]).select();
+      if (!error && data) setTransactions([data[0], ...transactions]);
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
     if (window.innerWidth < 1024) setActiveTab('history');
   };
 
-  const startEdit = (transaction: Transaction) => {
-    setEditingId(transaction.id); setDescription(transaction.description); setAmount(transaction.amount.toString()); setType(transaction.type); setDate(transaction.date);
-    if (window.innerWidth < 1024) setActiveTab('form');
-  };
-
-  const cancelEdit = () => { setEditingId(null); setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd')); if (window.innerWidth < 1024) setActiveTab('history'); };
-  
   const removeTransaction = async (id: string) => {
-    try {
-      await fetch(`${API_URL}/transactions/${id}`, { method: 'DELETE' });
-      if (editingId === id) cancelEdit();
-      setTransactions(transactions.filter(t => t.id !== id));
-    } catch (err) { console.error(err); }
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (!error) setTransactions(transactions.filter(t => t.id !== id));
   };
 
-  const changeMonth = (offset: number) => { const newMonth = new Date(selectedMonth); newMonth.setMonth(newMonth.getMonth() + offset); setSelectedMonth(newMonth); };
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  if (!session) return <Login />;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && currentUser) {
-      const reader = new FileReader(); 
-      reader.onloadend = async () => {
-        const avatarUrl = reader.result as string;
-        try {
-          await fetch(`${API_URL}/profile`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: currentUser.name, avatar_url: avatarUrl, email: currentUser.email })
-          });
-          const newUser = { ...currentUser, avatarUrl };
-          setCurrentUser(newUser);
-          localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
-        } catch (err) { console.error(err); }
-      }; 
-      reader.readAsDataURL(file);
-    }
-  };
-
-  if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
-  }
+  const userMetadata = session.user.user_metadata;
 
   return (
-    <div className={`relative min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans selection:bg-brand-100 antialiased overflow-x-hidden`}>
+    <div className={`relative min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans antialiased overflow-x-hidden`}>
       {showSplash && (
-        <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
+        <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center text-center w-full max-w-2xl px-6">
-            <div className="relative mb-8 md:mb-12 animate-scale-in">
-              <div className={`w-48 h-48 md:w-64 md:h-64 overflow-hidden rounded-[40px] md:rounded-[48px] shadow-2xl border ${isDarkMode ? 'border-slate-800 bg-[#161a20]' : 'border-slate-50 bg-white'}`}>
-                <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover" />
+            <div className="relative mb-8 animate-scale-in">
+              <div className="w-48 h-48 overflow-hidden rounded-[40px] shadow-2xl border border-slate-800 bg-[#161a20]">
+                <img src="/logo financeiro sem texto.png" alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
-            <div className="space-y-4 animate-fade-in [animation-delay:0.6s] flex flex-col items-center">
-              <h2 className={`text-4xl md:text-7xl font-black uppercase tracking-[0.2em] md:tracking-[0.5em] leading-none ml-[0.2em] md:ml-[0.5em] animate-fade-in [animation-delay:400ms] [animation-fill-mode:both] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-              <div className="h-1 w-32 md:w-48 bg-brand-500 rounded-full animate-fade-in [animation-delay:600ms] [animation-fill-mode:both]"></div>
-            </div>
-            <div className="mt-16 md:mt-24 flex gap-3">
-              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce"></div>
-              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="w-2.5 h-2.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-            </div>
+            <h2 className={`text-4xl md:text-7xl font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
           </div>
         </div>
       )}
 
-      <div className={`transition-all duration-1000 delay-300 ${isFadingOut ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        <header className={`border-b transition-colors duration-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-4 pb-4 px-4 md:px-6 sticky top-0 z-40 backdrop-blur-md`}>
+      <div className={`transition-all duration-1000 ${isFadingOut ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        <header className={`border-b ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-4 pb-4 px-4 md:px-6 sticky top-0 z-40 backdrop-blur-md`}>
           <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 w-full lg:w-auto">
-              <div className="flex items-center gap-4 group cursor-pointer self-start md:self-auto">
-                <div className={`w-12 h-12 md:w-16 md:h-16 overflow-hidden rounded-2xl border shadow-sm transition-colors ${isDarkMode ? 'bg-[#0f1115] border-slate-700' : 'bg-white border-slate-100'}`}>
-                  <img src="/logo financeiro sem texto.png" alt="Organizer Logo" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                </div>
-                <div>
-                  <h2 className={`text-base md:text-xl font-black leading-none tracking-tight uppercase ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Acesso Particular</p>
-                </div>
-              </div>
-
-              <div className="hidden md:block h-12 w-px bg-slate-200 dark:bg-slate-800"></div>
-
-              <div className="flex items-center bg-brand-600 rounded-lg p-1 shadow-md w-full md:w-auto justify-between md:justify-start">
-                <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-white/10 rounded-md transition-all text-white"><ChevronLeft className="w-4 h-4" /></button>
-                <span className="mx-4 font-bold text-xs md:text-sm capitalize min-w-[120px] text-center text-white tracking-wide">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
-                <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-white/10 rounded-md transition-all text-white"><ChevronRight className="w-4 h-4" /></button>
+            <div className="flex items-center gap-4">
+              <img src="/logo financeiro sem texto.png" className="w-12 h-12 rounded-2xl" alt="Logo" />
+              <h2 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-brand-600'}`}>ORGANIZER</h2>
+              <div className="flex items-center bg-brand-600 rounded-lg p-1 ml-4">
+                <button onClick={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() - 1)))} className="p-1 text-white"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="mx-4 font-bold text-xs text-white capitalize min-w-[100px] text-center">{format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}</span>
+                <button onClick={() => setSelectedMonth(new Date(selectedMonth.setMonth(selectedMonth.getMonth() + 1)))} className="p-1 text-white"><ChevronRight className="w-4 h-4" /></button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between lg:justify-end gap-4 md:gap-6 w-full lg:w-auto">
-              <div className={`flex items-center gap-2 md:gap-3 pr-4 md:pr-6 border-r ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
-                <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 md:p-2.5 rounded-lg transition-all ${isDarkMode ? 'bg-slate-800 text-amber-400' : 'bg-slate-50 text-slate-500'}`}>
-                  {isDarkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
-                </button>
-                <button onClick={() => setShowBalance(!showBalance)} className="p-2 md:p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">{showBalance ? <Eye className="w-4 h-4 md:w-5 md:h-5" /> : <EyeOff className="w-4 h-4 md:w-5 md:h-5" />}</button>
-                <button onClick={handleLogout} className="p-2 md:p-2.5 hover:bg-rose-100 dark:hover:bg-rose-900/20 rounded-lg text-rose-500 transition-colors"><LogOut className="w-4 h-4 md:w-5 md:h-5" /></button>
-              </div>
-              
-              <div className="flex items-center gap-3 md:gap-4 text-right">
-                <div className="hidden sm:block">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Bem-vindo,</p>
-                  <p className={`text-sm font-bold leading-none mb-2 ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{currentUser.name}</p>
-                  <button onClick={() => setIsEditingProfile(true)} className="flex items-center gap-1.5 ml-auto text-[10px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-widest transition-all"><Pencil className="w-3 h-3" /> Ajustar</button>
-                </div>
-                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl border-2 overflow-hidden flex items-center justify-center cursor-pointer transition-all shadow-sm relative group ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-400' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`} onClick={() => setIsEditingProfile(true)}>
-                  {currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt="User" className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-slate-400">{getInitials(currentUser.name)}</span>}
-                  <div className="absolute inset-0 bg-brand-600/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Camera className="w-4 h-4 text-brand-600" /></div>
-                </div>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 rounded-lg bg-slate-800 text-amber-400">
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button onClick={() => setShowBalance(!showBalance)} className="p-2 text-slate-400">{showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</button>
+              <button onClick={handleLogout} className="p-2 text-rose-500"><LogOut className="w-4 h-4" /></button>
+              <div className="text-right">
+                <p className="text-[10px] text-slate-400 uppercase font-bold">Bem-vindo,</p>
+                <p className="text-sm font-bold">{userMetadata.name || 'Usuário'}</p>
               </div>
             </div>
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-8 pb-32 lg:pb-20">
-          <div className="lg:hidden flex bg-white dark:bg-[#161a20] rounded-2xl p-1 border border-slate-200 dark:border-slate-800 shadow-sm">
-            <button onClick={() => setActiveTab('summary')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'summary' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <LayoutDashboard className="w-4 h-4" /> Resumo
-            </button>
-            <button onClick={() => setActiveTab('form')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'form' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <PlusCircle className="w-4 h-4" /> Lançar
-            </button>
-            <button onClick={() => setActiveTab('history')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === 'history' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>
-              <History className="w-4 h-4" /> Extrato
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
-            <div className={`lg:col-span-4 space-y-8 ${(activeTab === 'summary' || activeTab === 'form') ? 'block' : 'hidden lg:block'}`}>
-              <div className={`space-y-6 ${activeTab === 'summary' ? 'block' : 'hidden lg:block'}`}>
-                <div className={`p-8 rounded-2xl border transition-all relative overflow-hidden ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-                  <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Patrimônio Líquido</p>
-                  <div className="flex items-center justify-between">
-                    <h2 className={`text-3xl md:text-4xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
-                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color} border border-current/10 shadow-sm`}>{financialStatus.icon} {financialStatus.label}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className={`p-6 rounded-2xl border transition-all flex items-center gap-5 ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20"><TrendingUp className="w-5 h-5" /></div>
-                    <div><p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Receitas</p><p className="text-xl font-bold text-emerald-500">{showBalance ? `+ R$ ${summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••'}</p></div>
-                  </div>
-                  <div className={`p-6 rounded-2xl border transition-all flex items-center gap-5 ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20"><TrendingDown className="w-5 h-5" /></div>
-                    <div><p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Despesas</p><p className="text-xl font-bold text-rose-500">{showBalance ? `- R$ ${summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••'}</p></div>
-                  </div>
+        <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-4 space-y-6">
+              <div className={`p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} shadow-xl`}>
+                <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Saldo Total</p>
+                <h2 className="text-3xl font-bold">{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
+                <div className={`mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${financialStatus.bgColor} ${financialStatus.color}`}>
+                  {financialStatus.icon} {financialStatus.label}
                 </div>
               </div>
 
-              <div className={`${activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
-                <div className={`p-8 md:p-10 rounded-2xl border transition-all duration-500 shadow-xl lg:sticky lg:top-32 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} ${editingId ? 'ring-4 ring-brand-500/20 border-brand-500' : ''}`}>
-                  <div className="flex items-center gap-3 mb-8 md:mb-10"><div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center">{editingId ? <Pencil className="w-5 h-5" /> : <PlusCircle className="w-5 h-5" />}</div><h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{editingId ? 'Editar registro' : 'Nova transação'}</h3></div>
-                  <form onSubmit={handleSaveTransaction} className="space-y-6 md:space-y-8">
-                    <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Descrição</label><input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm font-medium ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} placeholder="Ex: Salário" /></div>
-                    <div className="grid grid-cols-1 gap-6">
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Valor do Fluxo</label><input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} placeholder="0,00" /></div>
-                      <div><label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block ml-1 tracking-widest">Data</label><input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all text-sm font-medium ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-brand-500 focus:bg-white'}`} /></div>
-                    </div>
-                    <div className={`flex gap-2 p-1.5 rounded-xl ${isDarkMode ? 'bg-[#0f1115]' : 'bg-slate-100'}`}>
-                      <button type="button" onClick={() => setType('income')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold transition-all ${type === 'income' ? 'bg-white text-emerald-600 shadow-md dark:bg-emerald-500 dark:text-white' : 'text-slate-400'}`}>RECEITA</button>
-                      <button type="button" onClick={() => setType('expense')} className={`flex-1 py-3 rounded-lg text-[10px] font-bold transition-all ${type === 'expense' ? 'bg-white text-rose-600 shadow-md dark:bg-rose-500 dark:text-white' : 'text-slate-400'}`}>DESPESA</button>
-                    </div>
-                    <div className="pt-4"><button type="submit" className={`w-full text-white font-bold text-xs uppercase tracking-widest py-5 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 ${editingId ? 'bg-emerald-600' : 'bg-brand-600'}`}>{editingId ? <Save className="w-5 h-5" /> : <Plus className="w-5 h-5" />}{editingId ? 'Salvar Edição' : 'Confirmar'}</button>{editingId && <button type="button" onClick={cancelEdit} className="w-full text-slate-400 font-bold py-3 mt-2 hover:text-rose-600 text-[10px] uppercase tracking-widest">Cancelar</button>}</div>
-                  </form>
-                </div>
+              <div className={`p-8 rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'}`}>
+                <h3 className="font-bold mb-6">{editingId ? 'Editar registro' : 'Nova transação'}</h3>
+                <form onSubmit={handleSaveTransaction} className="space-y-4">
+                  <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" className="w-full p-3 rounded-xl bg-white/5 border border-slate-700 outline-none focus:border-brand-500" />
+                  <input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="w-full p-3 rounded-xl bg-white/5 border border-slate-700 outline-none text-2xl font-bold" />
+                  <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 rounded-xl bg-white/5 border border-slate-700" />
+                  <div className="flex gap-2 p-1 bg-slate-900 rounded-xl">
+                    <button type="button" onClick={() => setType('income')} className={`flex-1 py-2 rounded-lg text-xs font-bold ${type === 'income' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>RECEITA</button>
+                    <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2 rounded-lg text-xs font-bold ${type === 'expense' ? 'bg-rose-500 text-white' : 'text-slate-400'}`}>DESPESA</button>
+                  </div>
+                  <button type="submit" className="w-full py-4 rounded-xl bg-brand-600 text-white font-bold uppercase text-xs tracking-widest hover:bg-brand-500 transition-all">
+                    {editingId ? 'Salvar Edição' : 'Confirmar Lançamento'}
+                  </button>
+                  {editingId && <button type="button" onClick={() => setEditingId(null)} className="w-full py-2 text-slate-400 text-xs uppercase font-bold">Cancelar</button>}
+                </form>
               </div>
             </div>
 
-            <div className={`lg:col-span-8 ${activeTab === 'history' ? 'block' : 'hidden lg:block'}`}>
-              <div className={`rounded-2xl border transition-all overflow-hidden min-h-[600px] ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <div className={`px-6 md:px-10 py-6 border-b flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm ${isDarkMode ? 'bg-[#161a20]/80 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`}>
-                  <h3 className={`text-sm font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>Extrato de Operações</h3>
-                  <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 px-4 py-2 rounded-lg border border-brand-100 dark:border-brand-800 uppercase tracking-widest">{filteredTransactions.length} registros</span>
+            <div className="lg:col-span-8">
+              <div className={`rounded-2xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} overflow-hidden`}>
+                <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                  <h3 className="text-sm font-black uppercase tracking-widest">Extrato de Operações</h3>
+                  <span className="text-[10px] font-bold bg-brand-600/20 text-brand-400 px-3 py-1 rounded-full">{filteredTransactions.length} registros</span>
                 </div>
-                <div className={`divide-y ${isDarkMode ? 'divide-slate-800' : 'divide-slate-100'}`}>
-                  {filteredTransactions.length === 0 ? (
-                    <div className="py-64 text-center opacity-20 flex flex-col items-center"><Calendar className="w-20 h-20 mb-6 text-slate-300" /><p className={`font-black text-xs uppercase tracking-[0.5em] ${isDarkMode ? 'text-white' : 'text-slate-400'}`}>Sem atividades</p></div>
-                  ) : (
-                    filteredTransactions.map((t) => (
-                      <div key={t.id} className={`px-6 md:px-10 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between transition-all group border-l-[8px] border-transparent ${editingId === t.id ? 'bg-brand-500/10 border-brand-500' : 'hover:bg-slate-500/5 hover:border-brand-500'}`}>
-                        <div className="flex items-center gap-6 mb-4 sm:mb-0 w-full sm:w-auto">
-                          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center border shadow-sm shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}><TrendingUp className="w-6 h-6 md:w-7 md:h-7" /></div>
-                          <div className="min-w-0">
-                            <p className={`font-bold text-base md:text-lg leading-none mb-2 uppercase tracking-tighter truncate ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{t.description}</p>
-                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
-                          </div>
+                <div className="divide-y divide-slate-800">
+                  {filteredTransactions.map((t) => (
+                    <div key={t.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          <TrendingUp className="w-5 h-5" />
                         </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-6 md:gap-10 w-full sm:w-auto">
-                          <p className={`font-black text-xl md:text-2xl tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => startEdit(t)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}><Pencil className="w-5 h-5" /></button>
-                            <button onClick={() => removeTransaction(t.id)} className={`p-3 rounded-xl transition-colors ${isDarkMode ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}><Trash2 className="w-5 h-5" /></button>
-                          </div>
+                        <div>
+                          <p className="font-bold text-sm uppercase">{t.description}</p>
+                          <p className="text-[10px] text-slate-500 font-bold">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
                         </div>
                       </div>
-                    ))
-                  )}
+                      <div className="flex items-center gap-6">
+                        <p className={`font-black ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {t.type === 'income' ? '+' : '-'} R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <button onClick={() => removeTransaction(t.id)} className="text-slate-600 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredTransactions.length === 0 && <div className="p-20 text-center text-slate-600 font-bold uppercase text-xs tracking-widest">Nenhuma atividade encontrada</div>}
                 </div>
               </div>
             </div>
           </div>
         </main>
       </div>
-
-      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 transition-all duration-1000 delay-500 ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} border-t px-6 py-3 flex items-center justify-around pb-safe ${isFadingOut ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-        <button onClick={() => setActiveTab('summary')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'summary' ? 'text-brand-600' : 'text-slate-400'}`}>
-          <LayoutDashboard className="w-6 h-6" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Início</span>
-        </button>
-        <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'form' ? 'text-brand-600' : 'text-slate-400'}`}>
-          <div className={`p-2 rounded-full -mt-8 shadow-xl border-4 ${isDarkMode ? 'bg-brand-600 border-[#0f1115] text-white' : 'bg-brand-600 border-[#f4f5f7] text-white'}`}>
-            <Plus className="w-6 h-6" />
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-widest">Lançar</span>
-        </button>
-        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-brand-600' : 'text-slate-400'}`}>
-          <History className="w-6 h-6" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Extrato</span>
-        </button>
-      </div>
-
-      {isEditingProfile && (
-        <div className="fixed inset-0 backdrop-blur-md z-[110] flex items-center justify-center p-6 bg-slate-900/60">
-          <div className={`w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300 ${isDarkMode ? 'bg-[#161a20]' : 'bg-white'}`}>
-            <div className={`p-10 border-b flex justify-between items-center ${isDarkMode ? 'bg-[#0f1115] border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-              <h2 className={`text-xl font-black uppercase tracking-widest ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Configuração</h2>
-              <button onClick={() => setIsEditingProfile(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X className="w-6 h-6" /></button>
-            </div>
-            <div className="p-10 space-y-10">
-              <div className="flex flex-col items-center gap-6"><div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}><div className={`w-32 h-32 rounded-2xl border-4 overflow-hidden flex items-center justify-center shadow-inner transition-all ${isDarkMode ? 'bg-[#0f1115] border-slate-700 hover:border-brand-500' : 'bg-slate-50 border-slate-100 hover:border-brand-500'}`}>{currentUser.avatarUrl ? <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="text-4xl font-black text-slate-200">{getInitials(currentUser.name)}</span>}</div><div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl text-white"><Camera className="w-8 h-8" /></div></div><input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" /></div>
-              <div className="space-y-6"><div><label className="text-[10px] font-black text-slate-400 uppercase block mb-2 tracking-[0.2em]">Nome do Gestor</label><input type="text" value={currentUser.name} onChange={async (e) => {
-                const name = e.target.value;
-                const newUser = { ...currentUser, name };
-                setCurrentUser(newUser);
-                localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
-                try {
-                  await fetch(`${API_URL}/profile`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, avatar_url: currentUser.avatarUrl, email: currentUser.email })
-                  });
-                } catch (err) { console.error(err); }
-              }} className={`w-full px-4 py-3 rounded-xl border outline-none transition-all font-black text-2xl ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-white focus:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-brand-500 focus:bg-white'}`} /></div><div className="flex gap-4"><button onClick={() => fileInputRef.current?.click()} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-brand-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-brand-500'}`}><Upload className="w-4 h-4 mr-2 inline" /> Alterar</button><button onClick={async () => {
-                const newUser = { ...currentUser, avatarUrl: '' };
-                setCurrentUser(newUser);
-                localStorage.setItem('organizer_logged_user', JSON.stringify(newUser));
-                try {
-                  await fetch(`${API_URL}/profile`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: currentUser.name, avatar_url: '', email: currentUser.email })
-                  });
-                } catch (err) { console.error(err); }
-              }} className={`flex-1 py-4 px-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'bg-[#0f1115] border-slate-700 text-slate-400 hover:border-rose-500' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-500'}`}><Trash2 className="w-4 h-4 mr-2 inline" /> Limpar</button></div></div>
-              <button onClick={() => setIsEditingProfile(false)} className="w-full bg-brand-600 text-white font-black py-6 rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all text-xs uppercase tracking-[0.3em]">Salvar Alterações</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
