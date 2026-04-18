@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  TrendingUp, Trash2, ChevronLeft, ChevronRight, Eye, EyeOff, Camera, X, Pencil, Moon, Sun, LayoutDashboard, History, LogOut, Plus, Check, User
+  TrendingUp, Trash2, ChevronLeft, ChevronRight, Eye, EyeOff, Camera, Pencil, Moon, Sun, LayoutDashboard, History, LogOut, Plus, Check, User
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -339,73 +339,73 @@ function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto pb-32 lg:pb-8 pt-6 px-4 text-left text-left">
-        <div className="max-w-6xl mx-auto space-y-6 text-left">
+      <main className="flex-1 overflow-y-auto pb-32 lg:pb-8 pt-6 px-4 text-left">
+        <div className="max-w-6xl mx-auto space-y-6">
           <div className="lg:hidden flex bg-white dark:bg-[#161a20] rounded-2xl p-1 border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-30">
             <button onClick={() => setActiveTab('summary')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'summary' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>Resumo</button>
             <button onClick={() => setActiveTab('form')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'form' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>Lançar</button>
             <button onClick={() => setActiveTab('history')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'history' ? 'bg-brand-600 text-white shadow-lg' : 'text-slate-400'}`}>Extrato</button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
-            <div className={`lg:col-span-4 space-y-6 ${(activeTab === 'summary' || activeTab === 'form') ? 'block' : 'hidden lg:block'} text-left`}>
-              <div className={`p-6 md:p-8 rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} relative overflow-hidden ${activeTab === 'summary' ? 'block' : 'hidden lg:block'} text-left`}>
-                <div className="absolute top-0 left-0 w-1 h-full bg-brand-500 text-left"></div>
-                <div className="flex justify-between items-start mb-2 text-left">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Saldo Total</p>
-                  <button onClick={() => setShowBalance(!showBalance)} className="text-slate-400 text-left">{showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</button>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className={`lg:col-span-4 space-y-6 ${(activeTab === 'summary' || activeTab === 'form') ? 'block' : 'hidden lg:block'}`}>
+              <div className={`p-6 md:p-8 rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} relative overflow-hidden ${activeTab === 'summary' ? 'block' : 'hidden lg:block'}`}>
+                <div className="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Saldo Total</p>
+                  <button onClick={() => setShowBalance(!showBalance)} className="text-slate-400">{showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</button>
                 </div>
                 <h2 className="text-3xl font-black text-left">{showBalance ? `R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '••••••••'}</h2>
                 <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800/10 dark:border-slate-800 text-left">
-                  <div className="text-left text-left">
-                    <p className="text-[9px] text-slate-400 uppercase font-bold text-left">Receitas</p>
-                    <p className="text-emerald-500 font-black text-sm text-left">{showBalance ? `+${summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                  <div>
+                    <p className="text-[9px] text-slate-400 uppercase font-bold">Receitas</p>
+                    <p className="text-emerald-500 font-black text-sm">{showBalance ? `+${summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
                   </div>
-                  <div className="text-left text-left">
-                    <p className="text-[9px] text-slate-400 uppercase font-bold text-left">Despesas</p>
-                    <p className="text-rose-500 font-black text-sm text-left">{showBalance ? `-${summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
+                  <div>
+                    <p className="text-[9px] text-slate-400 uppercase font-bold">Despesas</p>
+                    <p className="text-rose-500 font-black text-sm">{showBalance ? `-${summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '•••'}</p>
                   </div>
                 </div>
               </div>
 
-              <div className={`p-6 md:p-8 rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} ${activeTab === 'form' ? 'block' : 'hidden lg:block'} text-left`}>
+              <div className={`p-6 md:p-8 rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} ${activeTab === 'form' ? 'block' : 'hidden lg:block'}`}>
                 <h3 className="font-black text-sm uppercase tracking-widest mb-6 text-left">{editingId ? 'Editar' : 'Novo Lançamento'}</h3>
-                <form onSubmit={handleSaveTransaction} className="space-y-4 text-left text-left text-left">
-                  <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 text-sm text-left" />
-                  <div className="grid grid-cols-2 gap-4 text-left">
-                    <input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none font-black text-base text-left" />
-                    <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 text-sm text-left text-left" />
+                <form onSubmit={handleSaveTransaction} className="space-y-4 text-left">
+                  <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 text-sm" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <input type="number" required step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 outline-none font-black text-base" />
+                    <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-slate-200 dark:border-slate-700 text-sm" />
                   </div>
-                  <div className="flex gap-2 p-1 bg-black/5 dark:bg-slate-900 rounded-2xl transition-colors text-left text-left text-left">
+                  <div className="flex gap-2 p-1 bg-black/5 dark:bg-slate-900 rounded-2xl transition-colors">
                     <button type="button" onClick={() => setType('income')} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${type === 'income' ? 'bg-white dark:bg-emerald-500 text-emerald-600 dark:text-white shadow-md' : 'text-slate-400'}`}>RECEITA</button>
                     <button type="button" onClick={() => setType('expense')} className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all ${type === 'expense' ? 'bg-white dark:bg-rose-500 text-rose-600 dark:text-white shadow-md' : 'text-slate-400'}`}>DESPESA</button>
                   </div>
-                  <button type="submit" className="w-full py-5 rounded-2xl bg-brand-600 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-all text-left">Confirmar</button>
+                  <button type="submit" className="w-full py-5 rounded-2xl bg-brand-600 text-white font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-all">Confirmar</button>
                 </form>
               </div>
             </div>
 
-            <div className={`lg:col-span-8 ${activeTab === 'history' ? 'block' : 'hidden lg:block'} text-left`}>
-              <div className={`rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} overflow-hidden min-h-[400px] text-left`}>
-                <div className="p-6 border-b border-slate-800/10 dark:border-slate-800 flex justify-between items-center bg-inherit text-left">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-left">Atividade Recente</h3>
-                  <span className="text-[10px] font-black bg-brand-600/10 text-brand-600 px-3 py-1.5 rounded-lg text-left">{filteredTransactions.length} registros</span>
+            <div className={`lg:col-span-8 ${activeTab === 'history' ? 'block' : 'hidden lg:block'}`}>
+              <div className={`rounded-3xl border ${isDarkMode ? 'bg-[#161a20] border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'} overflow-hidden min-h-[400px]`}>
+                <div className="p-6 border-b border-slate-800/10 dark:border-slate-800 flex justify-between items-center bg-inherit">
+                  <h3 className="text-xs font-black uppercase tracking-widest">Atividade Recente</h3>
+                  <span className="text-[10px] font-black bg-brand-600/10 text-brand-600 px-3 py-1.5 rounded-lg">{filteredTransactions.length} registros</span>
                 </div>
-                <div className="divide-y divide-slate-800/10 dark:divide-slate-800 text-left text-left">
+                <div className="divide-y divide-slate-800/10 dark:divide-slate-800">
                   {filteredTransactions.map((t) => (
                     <div key={t.id} className="p-5 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-all text-left">
-                      <div className="flex items-center gap-4 text-left">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'} text-left text-left`}>
-                          <TrendingUp className={`w-5 h-5 ${t.type === 'expense' ? 'rotate-180' : ''} text-left`} />
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
+                          <TrendingUp className={`w-5 h-5 ${t.type === 'expense' ? 'rotate-180' : ''}`} />
                         </div>
-                        <div className="text-left text-left">
-                          <p className="font-bold text-sm uppercase tracking-tight text-left">{t.description}</p>
-                          <p className="text-[9px] text-slate-500 font-black uppercase text-left">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
+                        <div>
+                          <p className="font-bold text-sm uppercase tracking-tight">{t.description}</p>
+                          <p className="text-[9px] text-slate-500 font-black uppercase">{format(parseISO(t.date), "dd 'de' MMMM", { locale: ptBR })}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-left text-left">
-                        <p className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'} text-left`}>{t.type === 'income' ? '+' : '-'} {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                        <button onClick={() => removeTransaction(t.id)} className="p-2 text-slate-400 hover:text-rose-500 transition-all text-left text-left"><Trash2 className="w-4 h-4" /></button>
+                      <div className="flex items-center gap-4">
+                        <p className={`font-black text-sm ${t.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'income' ? '+' : '-'} {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <button onClick={() => removeTransaction(t.id)} className="p-2 text-slate-400 hover:text-rose-500 transition-all text-left"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
                   ))}
@@ -419,17 +419,17 @@ function App() {
       <div className="lg:hidden shrink-0 bg-white dark:bg-[#161a20] border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-safe flex items-center justify-around z-50">
         <button onClick={() => setActiveTab('summary')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'summary' ? 'text-brand-600 scale-110' : 'text-slate-400 opacity-60'}`}>
           <LayoutDashboard className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase tracking-tighter text-center text-left">Início</span>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-center">Início</span>
         </button>
         <button onClick={() => setActiveTab('form')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'form' ? 'text-brand-600' : 'text-slate-400'}`}>
-          <div className="p-3 rounded-full bg-brand-600 text-white -mt-8 shadow-xl border-4 border-[#f4f5f7] dark:border-[#0f1115] active:scale-90 transition-transform text-left">
+          <div className="p-3 rounded-full bg-brand-600 text-white -mt-8 shadow-xl border-4 border-[#f4f5f7] dark:border-[#0f1115] active:scale-90 transition-transform">
             <Plus className="w-6 h-6" />
           </div>
-          <span className="text-[9px] font-black uppercase tracking-tighter text-center text-left text-left">Lançar</span>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-center text-left">Lançar</span>
         </button>
         <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'history' ? 'text-brand-600 scale-110' : 'text-slate-400 opacity-60'}`}>
           <History className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase tracking-tighter text-center text-left text-left">Extrato</span>
+          <span className="text-[9px] font-black uppercase tracking-tighter text-center">Extrato</span>
         </button>
       </div>
 
