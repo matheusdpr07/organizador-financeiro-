@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  TrendingUp, Trash2, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Camera, X, Pencil, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut, PlusCircle, Plus, Check, User
+  TrendingUp, Trash2, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Camera, X, Pencil, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut, Plus, Check, User
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -178,16 +178,6 @@ function App() {
     }, { income: 0, expense: 0, total: 0 });
   }, [filteredTransactions]);
 
-  const financialStatus = useMemo(() => {
-    const { income, total } = summary;
-    if (total < 0) return { label: 'Crítico', color: 'text-rose-600', bgColor: 'bg-rose-50', icon: <XCircle className="w-4 h-4" /> };
-    if (income === 0) return { label: 'Iniciante', color: 'text-neutral-500', bgColor: 'bg-neutral-50', icon: <Sparkles className="w-4 h-4" /> };
-    const ratio = total / income;
-    if (ratio >= 0.5) return { label: 'Rei', color: 'text-brand-600', bgColor: 'bg-brand-50', icon: <Crown className="w-4 h-4" /> };
-    if (ratio >= 0.3) return { label: 'Ótimo', color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: <Trophy className="w-4 h-4" /> };
-    return { label: 'Mediano', color: 'text-amber-600', bgColor: 'bg-amber-50', icon: <AlertCircle className="w-4 h-4" /> };
-  }, [summary]);
-
   const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description || !amount || !date || !session) return;
@@ -206,6 +196,11 @@ function App() {
       if (!error && data) setTransactions([data[0], ...transactions]);
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
+  };
+
+  const startEdit = (t: Transaction) => {
+    setEditingId(t.id); setDescription(t.description); setAmount(t.amount.toString()); setType(t.type); setDate(t.date);
+    if (window.innerWidth < 1024) setActiveTab('form');
   };
 
   const removeTransaction = async (id: string) => {
