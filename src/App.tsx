@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  TrendingUp, Trash2, ChevronLeft, ChevronRight, Crown, Trophy, AlertCircle, XCircle, Eye, EyeOff, Camera, X, Pencil, Sparkles, Moon, Sun, LayoutDashboard, History, LogOut, Plus, Check, User
+  TrendingUp, Trash2, ChevronLeft, ChevronRight, Eye, EyeOff, Camera, X, Pencil, Moon, Sun, LayoutDashboard, History, LogOut, Plus, Check, User
 } from 'lucide-react';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -196,11 +196,6 @@ function App() {
       if (!error && data) setTransactions([data[0], ...transactions]);
     }
     setDescription(''); setAmount(''); setDate(format(new Date(), 'yyyy-MM-dd'));
-  };
-
-  const startEdit = (t: Transaction) => {
-    setEditingId(t.id); setDescription(t.description); setAmount(t.amount.toString()); setType(t.type); setDate(t.date);
-    if (window.innerWidth < 1024) setActiveTab('form');
   };
 
   const removeTransaction = async (id: string) => {
