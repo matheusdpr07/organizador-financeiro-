@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 interface SplitTextProps {
   text: string;
@@ -16,15 +16,15 @@ export default function SplitText({
 }: SplitTextProps) {
   const letters = useMemo(() => text.split(""), [text]);
 
-  const container = {
+  const container: Variants = {
     hidden: { opacity: 0 },
-    visible: (i = 1) => ({
+    visible: (i: number = 1) => ({
       opacity: 1,
       transition: { staggerChildren: animationSpeed, delayChildren: delay * i },
     }),
   };
 
-  const child = {
+  const child: Variants = {
     visible: {
       opacity: 1,
       y: 0,
