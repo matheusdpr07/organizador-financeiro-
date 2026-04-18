@@ -46,9 +46,9 @@ const LightPillar: React.FC<LightPillarProps> = ({
 
     const getQualitySettings = () => {
       switch (quality) {
-        case 'low': return { iterations: 20, precision: 'lowp' as THREE.Precision };
-        case 'medium': return { iterations: 40, precision: 'mediump' as THREE.Precision };
-        default: return { iterations: 80, precision: 'highp' as THREE.Precision };
+        case 'low': return { iterations: 20, precision: 'lowp' as any };
+        case 'medium': return { iterations: 40, precision: 'mediump' as any };
+        default: return { iterations: 80, precision: 'highp' as any };
       }
     };
 
