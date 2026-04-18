@@ -5,7 +5,6 @@ import {
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from './supabase';
-import GradientText from './GradientText';
 import SplitText from './SplitText';
 import { 
   Dialog, 
@@ -63,18 +62,13 @@ function Login() {
             </div>
           </div>
           
-          <GradientText
-            colors={["#7a0ae5", "#ffffff", "#7a0ae5"]}
-            animationSpeed={4}
-            yoyo={false}
-            className="flex justify-center"
-          >
+          <div className="flex justify-center mb-1">
             <SplitText
               text="ORGANIZER"
-              className="text-3xl font-black uppercase tracking-[0.2em]"
+              className="text-3xl font-black uppercase tracking-[0.2em] text-white"
               animationSpeed={0.08}
             />
-          </GradientText>
+          </div>
           <p className="mt-2 text-[10px] font-bold tracking-[0.4em] text-white/30 uppercase text-center">Inteligência Financeira</p>
         </div>
 
@@ -252,15 +246,14 @@ function App() {
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
 
-  // LOGICA DE RENDERIZAÇÃO: Splash Screen é um overlay em cima de tudo
   return (
     <>
-      {/* APP OU LOGIN (Renderiza por baixo enquanto a splash some) */}
+      {/* APP OU LOGIN (Apenas renderiza se a splash estiver no fim ou inativa) */}
       {(!showSplash || isFadingOut) && (
         !session ? <Login /> : (
           <div className={`relative flex flex-col h-[100dvh] transition-colors duration-500 ${isDarkMode ? 'bg-[#0f1115] text-slate-100' : 'bg-[#f4f5f7] text-slate-900'} font-sans antialiased overflow-hidden`}>
             <header className={`shrink-0 border-b ${isDarkMode ? 'bg-[#161a20] border-slate-800' : 'bg-white border-slate-200'} pt-safe px-4 md:px-6 z-40`}>
-              <div className="max-w-6xl mx-auto py-4 flex flex-col lg:flex-row items-center justify-between gap-4">
+              <div className="max-w-6xl mx-auto py-4 flex flex-col lg:flex-row items-center justify-between gap-4 text-left">
                 <div className="flex items-center justify-between w-full lg:w-auto">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl overflow-hidden border border-black/5 dark:border-white/5 bg-black flex items-center justify-center shadow-sm">
@@ -394,7 +387,7 @@ function App() {
         )
       )}
 
-      {/* SPLASH SCREEN (Overlay que aparece SEMPRE por cima) */}
+      {/* SPLASH SCREEN (Overlay fixado no topo) */}
       {showSplash && (
         <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-all duration-1000 ${isDarkMode ? 'bg-[#0f1115]' : 'bg-white'} ${isFadingOut ? 'opacity-0 scale-110 pointer-events-none' : 'opacity-100'}`}>
           <div className="flex flex-col items-center text-center w-full max-w-2xl px-6">

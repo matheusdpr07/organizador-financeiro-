@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { motion, Variants } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface SplitTextProps {
   text: string;
@@ -16,7 +16,7 @@ export default function SplitText({
 }: SplitTextProps) {
   const letters = useMemo(() => text.split(""), [text]);
 
-  const container: Variants = {
+  const container = {
     hidden: { opacity: 0 },
     visible: (i: number = 1) => ({
       opacity: 1,
@@ -24,7 +24,7 @@ export default function SplitText({
     }),
   };
 
-  const child: Variants = {
+  const child = {
     visible: {
       opacity: 1,
       y: 0,
@@ -48,14 +48,14 @@ export default function SplitText({
   return (
     <motion.h2
       style={{ display: "flex", overflow: "hidden" }}
-      variants={container}
+      variants={container as any}
       initial="hidden"
       animate="visible"
       className={className}
     >
       {letters.map((letter, index) => (
         <motion.span
-          variants={child}
+          variants={child as any}
           key={index}
           style={{ display: "inline-block" }}
         >
