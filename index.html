@@ -7,6 +7,12 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#050212">
     <title>Organizer - Inteligência Financeira</title>
+    <script>
+      // Polyfill crucial para AWS Cognito funcionar com Vite
+      window.global = window;
+      window.process = { env: {} };
+      var exports = {};
+    </script>
   </head>
   <body class="bg-[#050212] overflow-x-hidden">
     <div id="root"></div>
